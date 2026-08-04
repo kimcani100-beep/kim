@@ -73,7 +73,7 @@
     justify-content: center;
     font-size: min(60vh, 60vw);
     line-height: 1;
-    filter: grayscale(1) opacity(0.18);
+    filter: opacity(0.35);
     pointer-events: none;
   }
   #canvas { display: block; touch-action: none; width: 100%; height: 100%; position: relative; }
@@ -383,8 +383,8 @@
     wrap.style.background = bgCss(bg);
     const guide = document.getElementById("guide");
     guide.style.filter = bg.dark
-      ? "grayscale(1) brightness(3) opacity(0.3)"
-      : "grayscale(1) opacity(0.18)";
+      ? "opacity(0.5) brightness(1.15)"
+      : "opacity(0.35)";
   }
   const bgsWrap = document.getElementById("bgs");
   BGS.forEach((bg, i) => {
