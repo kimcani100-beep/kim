@@ -524,9 +524,12 @@
       ["⛰️","산"],["🌋","화산"]
     ],
     field: [
-      ["⚽🏃","축구선수"],["⚽🏃","손흥민"],["⚽","축구공 캐릭터"],["🧤","골키퍼"],
+      ["⚽🏃","축구선수"],["⚽🏃","손흥민"],["⚽👦","축구하는 도윤이"],["⚽","축구공 캐릭터"],
+      ["🏃⚽","드리블"],["⚽🦵","슛!"],["⚽🥅","골인!"],["🧤","골키퍼"],
       ["🥅","골대"],["⚽","축구공"],["👟","축구화"],["👕","유니폼"],
-      ["🏆","우승컵"],["🥇","금메달"],["🏟️","축구 경기장"],["🇰🇷","태극기"]
+      ["🟨🟥","심판 카드"],["🚩","코너 깃발"],["⚽🇰🇷","국가대표"],
+      ["🏆","우승컵"],["🥇","금메달"],["🏅","메달"],["📣","응원하기"],["🎉⚽","우승 파티"],
+      ["🏟️","축구 경기장"],["🇰🇷","태극기"]
     ],
     underwater: [
       ["🐟","물고기"],["🦈","상어"],["🐳","고래"],["🐬","돌고래"],["🐙","문어"],
@@ -984,10 +987,16 @@
     setBg(sceneIndex[MISSIONS[idx][2]], false);
     resetView();
   }
+  // 축구를 좋아해서 랜덤 뽑기에 축구가 자주 나오게 (10번 중 3번꼴)
+  const soccerIdxs = MISSIONS.map((m, i) => m[2] === "field" ? i : -1).filter(i => i >= 0);
   function pickMission(){
     let idx;
     do {
-      idx = Math.floor(Math.random() * MISSIONS.length);
+      if (Math.random() < 0.3) {
+        idx = soccerIdxs[Math.floor(Math.random() * soccerIdxs.length)];
+      } else {
+        idx = Math.floor(Math.random() * MISSIONS.length);
+      }
     } while (idx === missionIndex && MISSIONS.length > 1);
     setMission(idx);
   }
