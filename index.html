@@ -289,22 +289,24 @@
   }
 
   // ---------- 그리기 ----------
+  function strokeColor(){ return isEraser ? "#ffffff" : currentColor; }
+  function strokeWidth(){ return isEraser ? currentSize * 2 : currentSize; }
+
   function startDraw(e){
     saveUndoState();
     drawing = true;
     const p = getPos(e);
     lastX = p.x; lastY = p.y;
-    ctx.globalCompositeOperation = isEraser ? "destination-out" : "source-over";
-    ctx.fillStyle = currentColor;
+    ctx.fillStyle = strokeColor();
     ctx.beginPath();
-    ctx.arc(p.x, p.y, currentSize/2, 0, Math.PI*2);
+    ctx.arc(p.x, p.y, strokeWidth()/2, 0, Math.PI*2);
     ctx.fill();
   }
   function moveDraw(e){
     if (!drawing) return;
     const p = getPos(e);
-    ctx.strokeStyle = currentColor;
-    ctx.lineWidth = currentSize;
+    ctx.strokeStyle = strokeColor();
+    ctx.lineWidth = strokeWidth();
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.beginPath();
@@ -315,7 +317,6 @@
   }
   function endDraw(){
     drawing = false;
-    ctx.globalCompositeOperation = "source-over";
   }
 
   canvas.addEventListener("pointerdown", (e)=>{ canvas.setPointerCapture(e.pointerId); startDraw(e); });
@@ -364,6 +365,7 @@
   eraserBtn.addEventListener("click", () => {
     isEraser = !isEraser;
     eraserBtn.classList.toggle("selected", isEraser);
+    showToast(isEraser ? "🧽 지우개! 문지르면 지워져요" : "🖍️ 다시 그리기!");
   });
   document.getElementById("undoBtn").addEventListener("click", undo);
   document.getElementById("clearBtn").addEventListener("click", () => {
