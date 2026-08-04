@@ -113,6 +113,24 @@
     cursor: pointer;
   }
   #zoomBtns button:active { transform: scale(0.92); }
+  #panPad {
+    position: absolute;
+    right: 8px; bottom: 8px;
+    z-index: 5;
+    display: none;
+    grid-template-columns: repeat(3, 40px);
+    grid-auto-rows: 40px;
+    gap: 2px;
+  }
+  #panPad button {
+    border: none;
+    border-radius: 10px;
+    font-size: 17px;
+    background: rgba(255,255,255,0.9);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+    cursor: pointer;
+  }
+  #panPad button:active { transform: scale(0.9); }
 
   #toolbar {
     display: flex;
@@ -122,7 +140,7 @@
     padding: 5px 6px 8px;
     max-width: 100vw;
   }
-  #colors, #bgs, #toolRow {
+  #colors, #bgs, #stamps, #toolRow {
     display: flex;
     flex-wrap: nowrap;
     max-width: 100%;
@@ -136,7 +154,23 @@
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
-  #colors::-webkit-scrollbar, #bgs::-webkit-scrollbar, #toolRow::-webkit-scrollbar { display: none; }
+  #colors::-webkit-scrollbar, #bgs::-webkit-scrollbar, #stamps::-webkit-scrollbar, #toolRow::-webkit-scrollbar { display: none; }
+  #stamps::before {
+    content: "😊";
+    font-size: 16px;
+  }
+  .stampBtn {
+    flex: 0 0 auto;
+    border: none;
+    background: #f7f7f7;
+    border-radius: 8px;
+    width: 32px; height: 32px;
+    font-size: 19px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0;
+  }
+  .stampBtn.selected { background: #ffd166; box-shadow: 0 0 0 2px #e5a800; }
   #bgs::before {
     content: "🖼️";
     font-size: 16px;
@@ -299,11 +333,17 @@
       <button id="zoomIn">➕</button>
       <button id="zoomOut">➖</button>
     </div>
+    <div id="panPad">
+      <span></span><button data-dx="0" data-dy="1">⬆️</button><span></span>
+      <button data-dx="1" data-dy="0">⬅️</button><span></span><button data-dx="-1" data-dy="0">➡️</button>
+      <span></span><button data-dx="0" data-dy="-1">⬇️</button><span></span>
+    </div>
   </div>
 
   <div id="toolbar">
     <div id="bgs" title="배경 고르기"></div>
     <div id="colors"></div>
+    <div id="stamps" title="스티커 붙이기"></div>
     <div id="toolRow">
       <div id="sizes"></div>
       <div id="toolDivider"></div>
@@ -603,7 +643,9 @@
   function applyView(){
     clampView();
     zoomLayer.style.transform = "translate(" + view.tx + "px," + view.ty + "px) scale(" + view.s + ")";
-    zoomReset.style.display = view.s > 1.01 ? "block" : "none";
+    const zoomed = view.s > 1.01;
+    zoomReset.style.display = zoomed ? "block" : "none";
+    document.getElementById("panPad").style.display = zoomed ? "grid" : "none";
   }
   function resetView(){
     view = { s: 1, tx: 0, ty: 0 };
@@ -621,6 +663,14 @@
   }
   document.getElementById("zoomIn").addEventListener("click", () => zoomBy(1.5));
   document.getElementById("zoomOut").addEventListener("click", () => zoomBy(1 / 1.5));
+  document.querySelectorAll("#panPad button").forEach(b => {
+    b.addEventListener("click", () => {
+      const step = Math.min(wrap.clientWidth, wrap.clientHeight) * 0.2;
+      view.tx += step * parseInt(b.dataset.dx, 10);
+      view.ty += step * parseInt(b.dataset.dy, 10);
+      applyView();
+    });
+  });
 
   // ---------- undo ----------
   let undoStack = [];
@@ -687,10 +737,60 @@
   function dist(a, b){ return Math.hypot(a.x - b.x, a.y - b.y); }
   function mid(a, b){ return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
 
+  // ---------- 스티커(도장) ----------
+  const STAMPS = [
+    "👀","👁️","👃","👄","👅","👂","🖐️","💪",
+    "🎩","👑","🎀","🕶️","👓","🧢",
+    "😀","😂","🥰","😎","🤪","🥳","😭","😡",
+    "❤️","💛","💙","💚","💜","💖","💕",
+    "⭐","🌟","✨","💫","💥","💦","💨","🔥","⚡","🌈",
+    "🌸","🌻","🍀","🎈","🎉","🎁","🍭","🍦","🍎",
+    "🦋","🐝","🐞","🐣","🎵","🎶","⚽","💩"
+  ];
+  let stampMode = null;
+  const stampsWrap = document.getElementById("stamps");
+  function clearStampMode(){
+    stampMode = null;
+    document.querySelectorAll(".stampBtn").forEach(b => b.classList.remove("selected"));
+  }
+  const drawModeBtn = document.createElement("button");
+  drawModeBtn.className = "stampBtn";
+  drawModeBtn.textContent = "🖍️";
+  drawModeBtn.title = "그리기로 돌아가기";
+  drawModeBtn.addEventListener("click", () => {
+    clearStampMode();
+    showToast("🖍️ 그리기!");
+  });
+  stampsWrap.appendChild(drawModeBtn);
+  STAMPS.forEach(s => {
+    const btn = document.createElement("button");
+    btn.className = "stampBtn";
+    btn.textContent = s;
+    btn.addEventListener("click", () => {
+      clearStampMode();
+      stampMode = s;
+      btn.classList.add("selected");
+      isEraser = false;
+      document.getElementById("eraserBtn").classList.remove("selected");
+      showToast(s + " 콕! 찍고 싶은 곳을 눌러요");
+    });
+    stampsWrap.appendChild(btn);
+  });
+  function placeStamp(e){
+    saveUndoState();
+    const p = getPos(e);
+    const size = ({ 3: 30, 8: 48, 16: 76, 28: 110 })[currentSize] || 48;
+    ctx.font = size + "px 'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(stampMode, p.x, p.y);
+  }
+
   canvas.addEventListener("pointerdown", (e)=>{
     canvas.setPointerCapture(e.pointerId);
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.size === 1) {
+      if (stampMode) { placeStamp(e); return; }
       startDraw(e);
     } else if (pointers.size === 2) {
       if (drawing) {           // 그리던 선 취소하고 확대 모드로
@@ -769,6 +869,7 @@
     sw.addEventListener("click", () => {
       currentColor = c;
       isEraser = false;
+      clearStampMode();
       document.getElementById("eraserBtn").classList.remove("selected");
       document.querySelectorAll(".swatch").forEach(s => s.classList.remove("selected"));
       sw.classList.add("selected");
@@ -799,6 +900,7 @@
   const eraserBtn = document.getElementById("eraserBtn");
   eraserBtn.addEventListener("click", () => {
     isEraser = !isEraser;
+    clearStampMode();
     eraserBtn.classList.toggle("selected", isEraser);
     showToast(isEraser ? "🧽 지우개! 문지르면 지워져요" : "🖍️ 다시 그리기!");
   });
