@@ -417,6 +417,12 @@
 
   // ---------- 그릴 것 목록: 주제별 배경과 짝지음 ----------
   const GROUPS = {
+    chars: [
+      ["🐧","뽀로로","snow"],["🦖","크롱","snow"],["🐹","루피","snow"],["🐻‍❄️","포비","snow"],
+      ["🦈","아기상어","underwater"],["🦊","핑크퐁","castle"],["🚌","타요","road"],["🚓","로보카 폴리","road"],
+      ["⚡🐭","피카츄","meadow"],["💖","티니핑","castle"],["👸❄️","엘사","snow"],["👻","신비","night"],
+      ["🐱🎀","헬로키티","room"],["🐛","라바","meadow"]
+    ],
     meadow: [
       ["🐶","강아지"],["🐱","고양이"],["🦁","사자"],["🐯","호랑이"],["🐘","코끼리"],
       ["🦒","기린"],["🐻","곰"],["🐼","판다"],["🐰","토끼"],["🦊","여우"],
@@ -476,7 +482,7 @@
 
   const MISSIONS = [];
   Object.keys(GROUPS).forEach(k => {
-    GROUPS[k].forEach(m => MISSIONS.push([m[0], m[1], k]));
+    GROUPS[k].forEach(m => MISSIONS.push([m[0], m[1], m[2] || k]));
   });
 
   const COLORS = [
@@ -716,6 +722,7 @@
 
   // ---------- 그림책(직접 골라서 그리기) ----------
   const GROUP_TITLES = {
+    chars: "🌟 인기 캐릭터",
     meadow: "🐾 동물 친구들과 자연",
     underwater: "🐠 바닷속",
     seaside: "⛱️ 바닷가",
