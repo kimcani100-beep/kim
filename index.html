@@ -233,6 +233,19 @@
     transform: translate(-50%, -50%) scale(1);
   }
 
+  button, .swatch, .bgswatch, .stampBtn, .pickCard { touch-action: manipulation; }
+
+  @media (min-width: 768px) {
+    .swatch { width: 34px; height: 34px; }
+    .bgswatch { width: 42px; height: 36px; }
+    .stampBtn { width: 40px; height: 40px; font-size: 24px; }
+    .sizeBtn { width: 38px; height: 38px; }
+    #actions button, #zoomCtrl button { font-size: 21px; padding: 6px 12px; }
+    #zoomReset { font-size: 15px; }
+    .miniBtn { font-size: 16px; padding: 8px 14px; }
+    #toolbar { gap: 7px; }
+  }
+
   #picker {
     position: fixed;
     inset: 0;
@@ -785,7 +798,15 @@
     ctx.restore();
   }
 
+  // 펜(S펜)으로 그리는 중엔 손바닥 터치 무시 (거치 방지)
+  let lastPenTime = 0;
+  function isPalm(e){
+    if (e.pointerType === "pen") { lastPenTime = Date.now(); return false; }
+    return e.pointerType === "touch" && Date.now() - lastPenTime < 1500;
+  }
+
   canvas.addEventListener("pointerdown", (e)=>{
+    if (isPalm(e)) return;
     canvas.setPointerCapture(e.pointerId);
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.size === 1) {
@@ -802,6 +823,7 @@
     }
   });
   canvas.addEventListener("pointermove", (e)=>{
+    if (e.pointerType === "pen") lastPenTime = Date.now();
     if (!pointers.has(e.pointerId)) return;
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pinch && pointers.size >= 2) {
@@ -1043,6 +1065,8 @@
   });
 
   // ---------- 시작 ----------
+  // 아이패드 사파리의 페이지 자체 확대 방지 (그림판 확대 기능과 충돌)
+  document.addEventListener("gesturestart", (e) => e.preventDefault());
   document.getElementById("starCount").textContent = stars;
   pickMission();
   setTimeout(() => showToast("두 손가락으로 벌리면 확대! 🔍"), 800);
