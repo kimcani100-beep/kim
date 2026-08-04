@@ -4,7 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="color-scheme" content="light only">
-<title>세상의 모든 것 그리기!</title>
+<title>도윤이 세상 모든 것 그리기</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="도윤이 그리기">
+<meta name="theme-color" content="#ff5fa2">
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   :root { color-scheme: light only; }
@@ -84,22 +90,31 @@
   #zoomCtrl {
     display: flex;
     flex-wrap: nowrap;
-    gap: 6px;
+    max-width: 100%;
+    gap: 8px;
+    background: #fff;
+    padding: 5px 10px;
+    border-radius: 14px;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.08);
     align-items: center;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
   }
+  #zoomCtrl::-webkit-scrollbar { display: none; }
+  #zoomCtrl::before { content: "🔍"; font-size: 16px; }
   #zoomCtrl button {
     flex: 0 0 auto;
     border: none;
     border-radius: 10px;
-    padding: 4px 8px;
-    font-size: 17px;
+    padding: 5px 11px;
+    font-size: 18px;
     cursor: pointer;
     background: #eaf4ff;
   }
   #zoomCtrl button:active { transform: translateY(2px); }
   #zoomCtrl button.dim { opacity: 0.35; }
   #zoomReset { font-size: 13px; font-weight: bold; }
-  #toolDivider2 { width: 2px; height: 24px; background: #eee; border-radius: 2px; flex: 0 0 auto; }
 
   #toolbar {
     display: flex;
@@ -300,6 +315,15 @@
   </div>
 
   <div id="toolbar">
+    <div id="zoomCtrl">
+      <button id="zoomIn" title="확대">➕</button>
+      <button id="zoomOut" title="축소">➖</button>
+      <button data-dx="0" data-dy="1" title="위로">⬆️</button>
+      <button data-dx="0" data-dy="-1" title="아래로">⬇️</button>
+      <button data-dx="1" data-dy="0" title="왼쪽으로">⬅️</button>
+      <button data-dx="-1" data-dy="0" title="오른쪽으로">➡️</button>
+      <button id="zoomReset" title="원래 크기로">🔍전체</button>
+    </div>
     <div id="bgs" title="배경 고르기"></div>
     <div id="colors"></div>
     <div id="stamps" title="스티커 붙이기"></div>
@@ -311,16 +335,6 @@
         <button id="undoBtn" title="되돌리기">↩️</button>
         <button id="clearBtn" title="전체 지우기">🗑️</button>
         <button id="saveBtn" title="저장하기">💾</button>
-      </div>
-      <div id="toolDivider2"></div>
-      <div id="zoomCtrl">
-        <button id="zoomIn" title="확대">➕</button>
-        <button id="zoomOut" title="축소">➖</button>
-        <button data-dx="0" data-dy="1" title="위로">⬆️</button>
-        <button data-dx="0" data-dy="-1" title="아래로">⬇️</button>
-        <button data-dx="1" data-dy="0" title="왼쪽으로">⬅️</button>
-        <button data-dx="-1" data-dy="0" title="오른쪽으로">➡️</button>
-        <button id="zoomReset" title="원래 크기로">🔍전체</button>
       </div>
     </div>
   </div>
