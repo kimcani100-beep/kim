@@ -477,7 +477,7 @@
       ["⛰️","산"],["🌋","화산"]
     ],
     field: [
-      ["⚽🏃","축구선수"],["🥅","골대"],["⚽","축구공"],["🇰🇷","태극기"]
+      ["⚽🏃","축구선수"],["🥅","골대"],["⚽","축구공"],["👟","축구화"],["🇰🇷","태극기"]
     ],
     underwater: [
       ["🐟","물고기"],["🦈","상어"],["🐳","고래"],["🐬","돌고래"],["🐙","문어"],
@@ -551,16 +551,31 @@
   const wrap = document.getElementById("canvasWrap");
   const ctx = canvas.getContext("2d");
 
-  function setupCanvas(){
+  function resizeCanvas(){
     const rect = wrap.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = Math.round(rect.width * dpr);
-    canvas.height = Math.round(rect.height * dpr);
+    const w = Math.round(rect.width * dpr), h = Math.round(rect.height * dpr);
+    if (w === canvas.width && h === canvas.height) return;
+    let snap = null;
+    if (canvas.width > 0 && canvas.height > 0) {
+      snap = document.createElement("canvas");
+      snap.width = canvas.width; snap.height = canvas.height;
+      snap.getContext("2d").drawImage(canvas, 0, 0);
+    }
+    canvas.width = w; canvas.height = h;
     canvas.style.width = rect.width + "px";
     canvas.style.height = rect.height + "px";
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (snap) {
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.drawImage(snap, 0, 0, w, h);
+      ctx.restore();
+    }
   }
-  setupCanvas();
+  resizeCanvas();
+  window.addEventListener("resize", () => setTimeout(resizeCanvas, 50));
+  window.addEventListener("load", () => setTimeout(resizeCanvas, 300));
 
   function clearCanvas(){
     ctx.save();
@@ -620,12 +635,11 @@
     const dataUrl = undoStack.pop();
     const img = new Image();
     img.onload = function(){
-      const rect = wrap.getBoundingClientRect();
       ctx.save();
-      ctx.setTransform(1,0,0,1,0,0);
-      ctx.clearRect(0,0,canvas.width, canvas.height);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       ctx.restore();
-      ctx.drawImage(img, 0, 0, rect.width, rect.height);
     };
     img.src = dataUrl;
   }
