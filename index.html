@@ -49,8 +49,11 @@
     cursor: pointer;
     box-shadow: 0 3px 0 rgba(0,0,0,0.15);
   }
+  #mission { flex-wrap: wrap; }
   #nextBtn { background: #ffe27a; }
   #doneBtn { background: #a5ffb0; }
+  #guideBtn { background: #ddd1ff; }
+  #guideBtn.off { background: #eee; color: #999; }
   .miniBtn:active { transform: translateY(2px); box-shadow: none; }
 
   #canvasWrap {
@@ -62,7 +65,18 @@
     box-shadow: 0 4px 14px rgba(0,0,0,0.15);
     position: relative;
   }
-  #canvas { display: block; touch-action: none; width: 100%; height: 100%; }
+  #guide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: min(60vh, 60vw);
+    line-height: 1;
+    filter: grayscale(1) opacity(0.18);
+    pointer-events: none;
+  }
+  #canvas { display: block; touch-action: none; width: 100%; height: 100%; position: relative; }
 
   #toolbar {
     display: flex;
@@ -173,9 +187,11 @@
     <span id="missionName">강아지</span>
     <button class="miniBtn" id="nextBtn">다음 그림 🔄</button>
     <button class="miniBtn" id="doneBtn">다 그렸어요! ✅</button>
+    <button class="miniBtn" id="guideBtn">밑그림 👻</button>
   </div>
 
   <div id="canvasWrap">
+    <div id="guide">🐶</div>
     <canvas id="canvas"></canvas>
   </div>
 
@@ -255,10 +271,15 @@
     canvas.style.width = rect.width + "px";
     canvas.style.height = rect.height + "px";
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, rect.width, rect.height);
   }
   setupCanvas();
+
+  function clearCanvas(){
+    ctx.save();
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+  }
 
   function getPos(e){
     const rect = canvas.getBoundingClientRect();
@@ -289,7 +310,6 @@
   }
 
   // ---------- 그리기 ----------
-  function strokeColor(){ return isEraser ? "#ffffff" : currentColor; }
   function strokeWidth(){ return isEraser ? currentSize * 2 : currentSize; }
 
   function startDraw(e){
@@ -297,7 +317,8 @@
     drawing = true;
     const p = getPos(e);
     lastX = p.x; lastY = p.y;
-    ctx.fillStyle = strokeColor();
+    ctx.globalCompositeOperation = isEraser ? "destination-out" : "source-over";
+    ctx.fillStyle = currentColor;
     ctx.beginPath();
     ctx.arc(p.x, p.y, strokeWidth()/2, 0, Math.PI*2);
     ctx.fill();
@@ -305,7 +326,7 @@
   function moveDraw(e){
     if (!drawing) return;
     const p = getPos(e);
-    ctx.strokeStyle = strokeColor();
+    ctx.strokeStyle = currentColor;
     ctx.lineWidth = strokeWidth();
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -317,6 +338,7 @@
   }
   function endDraw(){
     drawing = false;
+    ctx.globalCompositeOperation = "source-over";
   }
 
   canvas.addEventListener("pointerdown", (e)=>{ canvas.setPointerCapture(e.pointerId); startDraw(e); });
@@ -371,16 +393,21 @@
   document.getElementById("clearBtn").addEventListener("click", () => {
     if (!confirm("전체 그림을 지울까요?")) return;
     saveUndoState();
-    const rect = wrap.getBoundingClientRect();
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, rect.width, rect.height);
+    clearCanvas();
   });
   document.getElementById("saveBtn").addEventListener("click", () => {
+    const out = document.createElement("canvas");
+    out.width = canvas.width;
+    out.height = canvas.height;
+    const octx = out.getContext("2d");
+    octx.fillStyle = "#ffffff";
+    octx.fillRect(0, 0, out.width, out.height);
+    octx.drawImage(canvas, 0, 0);
     const link = document.createElement("a");
     const name = document.getElementById("missionName").textContent;
     const date = new Date().toISOString().slice(0,10);
     link.download = `내그림_${name}_${date}.png`;
-    link.href = canvas.toDataURL("image/png");
+    link.href = out.toDataURL("image/png");
     link.click();
   });
 
@@ -393,8 +420,19 @@
     missionIndex = idx;
     document.getElementById("missionEmoji").textContent = MISSIONS[idx][0];
     document.getElementById("missionName").textContent = MISSIONS[idx][1];
+    document.getElementById("guide").textContent = MISSIONS[idx][0];
   }
   document.getElementById("nextBtn").addEventListener("click", pickMission);
+
+  // ---------- 밑그림(따라 그리기) 켜기/끄기 ----------
+  const guideBtn = document.getElementById("guideBtn");
+  guideBtn.addEventListener("click", () => {
+    const guide = document.getElementById("guide");
+    const off = guide.style.display === "none";
+    guide.style.display = off ? "flex" : "none";
+    guideBtn.classList.toggle("off", !off);
+    showToast(off ? "👻 밑그림 켜기!" : "밑그림 숨기기!");
+  });
 
   function showToast(text){
     const toast = document.getElementById("toast");
@@ -409,9 +447,7 @@
     document.getElementById("starCount").textContent = stars;
     showToast("정말 잘 그렸어요! 🎉⭐");
     setTimeout(() => {
-      const rect = wrap.getBoundingClientRect();
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, rect.width, rect.height);
+      clearCanvas();
       undoStack = [];
       pickMission();
     }, 1200);
