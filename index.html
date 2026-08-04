@@ -64,6 +64,11 @@
     box-shadow: 0 4px 14px rgba(0,0,0,0.15);
     position: relative;
   }
+  #zoomLayer {
+    position: absolute;
+    inset: 0;
+    transform-origin: 0 0;
+  }
   #guide {
     position: absolute;
     inset: 0;
@@ -76,6 +81,20 @@
     pointer-events: none;
   }
   #canvas { display: block; touch-action: none; width: 100%; height: 100%; position: relative; }
+  #zoomReset {
+    position: absolute;
+    top: 8px; left: 8px;
+    z-index: 5;
+    display: none;
+    border: none;
+    border-radius: 12px;
+    padding: 8px 12px;
+    font-size: 15px;
+    font-weight: bold;
+    background: rgba(255,255,255,0.92);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    cursor: pointer;
+  }
 
   #toolbar {
     display: flex;
@@ -253,8 +272,11 @@
   </div>
 
   <div id="canvasWrap">
-    <div id="guide">🐶</div>
-    <canvas id="canvas"></canvas>
+    <div id="zoomLayer">
+      <div id="guide">🐶</div>
+      <canvas id="canvas"></canvas>
+    </div>
+    <button id="zoomReset">🔍 원래대로</button>
   </div>
 
   <div id="toolbar">
@@ -527,8 +549,30 @@
 
   function getPos(e){
     const rect = canvas.getBoundingClientRect();
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    const ratio = rect.width / canvas.offsetWidth;
+    return { x: (e.clientX - rect.left) / ratio, y: (e.clientY - rect.top) / ratio };
   }
+
+  // ---------- 확대(핀치 줌) ----------
+  const zoomLayer = document.getElementById("zoomLayer");
+  const zoomReset = document.getElementById("zoomReset");
+  let view = { s: 1, tx: 0, ty: 0 };
+  function clampView(){
+    const W = wrap.clientWidth, H = wrap.clientHeight;
+    view.s = Math.min(4, Math.max(1, view.s));
+    view.tx = Math.min(0, Math.max(W - W * view.s, view.tx));
+    view.ty = Math.min(0, Math.max(H - H * view.s, view.ty));
+  }
+  function applyView(){
+    clampView();
+    zoomLayer.style.transform = "translate(" + view.tx + "px," + view.ty + "px) scale(" + view.s + ")";
+    zoomReset.style.display = view.s > 1.01 ? "block" : "none";
+  }
+  function resetView(){
+    view = { s: 1, tx: 0, ty: 0 };
+    applyView();
+  }
+  zoomReset.addEventListener("click", resetView);
 
   // ---------- undo ----------
   let undoStack = [];
@@ -585,11 +629,58 @@
     ctx.globalCompositeOperation = "source-over";
   }
 
-  canvas.addEventListener("pointerdown", (e)=>{ canvas.setPointerCapture(e.pointerId); startDraw(e); });
-  canvas.addEventListener("pointermove", moveDraw);
-  canvas.addEventListener("pointerup", endDraw);
-  canvas.addEventListener("pointercancel", endDraw);
-  canvas.addEventListener("pointerleave", ()=>{ if(drawing) endDraw(); });
+  // 손가락 1개 = 그리기, 손가락 2개 = 확대/이동
+  const pointers = new Map();
+  let pinch = null;
+
+  function pinchPoints(){
+    const arr = [...pointers.values()];
+    return [arr[0], arr[1]];
+  }
+  function dist(a, b){ return Math.hypot(a.x - b.x, a.y - b.y); }
+  function mid(a, b){ return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
+
+  canvas.addEventListener("pointerdown", (e)=>{
+    canvas.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 1) {
+      startDraw(e);
+    } else if (pointers.size === 2) {
+      if (drawing) {           // 그리던 선 취소하고 확대 모드로
+        drawing = false;
+        ctx.globalCompositeOperation = "source-over";
+        undo();
+      }
+      const [a, b] = pinchPoints();
+      pinch = { d0: dist(a, b), m0: mid(a, b), s0: view.s, tx0: view.tx, ty0: view.ty };
+    }
+  });
+  canvas.addEventListener("pointermove", (e)=>{
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch && pointers.size >= 2) {
+      const [a, b] = pinchPoints();
+      const wrapRect = wrap.getBoundingClientRect();
+      const m = mid(a, b);
+      const s = Math.min(4, Math.max(1, pinch.s0 * dist(a, b) / pinch.d0));
+      const m0x = pinch.m0.x - wrapRect.left, m0y = pinch.m0.y - wrapRect.top;
+      const mx = m.x - wrapRect.left, my = m.y - wrapRect.top;
+      view.s = s;
+      view.tx = mx - ((m0x - pinch.tx0) / pinch.s0) * s;
+      view.ty = my - ((m0y - pinch.ty0) / pinch.s0) * s;
+      applyView();
+    } else if (drawing) {
+      moveDraw(e);
+    }
+  });
+  function liftPointer(e){
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinch = null;
+    if (drawing) endDraw();
+  }
+  canvas.addEventListener("pointerup", liftPointer);
+  canvas.addEventListener("pointercancel", liftPointer);
+  canvas.addEventListener("pointerleave", (e)=>{ if (drawing) liftPointer(e); });
 
   // ---------- 배경(장면) ----------
   function sceneUrl(scene){
@@ -706,6 +797,7 @@
     guide.textContent = MISSIONS[idx][0];
     guide.style.fontSize = glyphCount(MISSIONS[idx][0]) > 1 ? "min(38vh, 38vw)" : "min(60vh, 60vw)";
     setBg(sceneIndex[MISSIONS[idx][2]], false);
+    resetView();
   }
   function pickMission(){
     let idx;
@@ -805,6 +897,7 @@
   // ---------- 시작 ----------
   document.getElementById("starCount").textContent = stars;
   pickMission();
+  setTimeout(() => showToast("두 손가락으로 벌리면 확대! 🔍"), 800);
 })();
 </script>
 </body>
