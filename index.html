@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>세상의 모든 것 그리기!</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: linear-gradient(135deg, #fff6d5, #ffe0f0, #dff3ff);
+    overflow: hidden;
+    user-select: none;
+  }
+  #app { display: flex; flex-direction: column; height: 100%; }
+
+  header {
+    text-align: center;
+    padding: 8px 6px 4px;
+  }
+  header h1 {
+    margin: 0;
+    font-size: clamp(18px, 4vw, 28px);
+    color: #ff5fa2;
+    text-shadow: 1px 1px 0 #fff, 2px 2px 0 #ffd166;
+  }
+
+  #mission {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: #fff;
+    border-radius: 20px;
+    margin: 4px auto;
+    padding: 10px 16px;
+    width: min(94%, 640px);
+    box-shadow: 0 4px 0 rgba(0,0,0,0.08);
+  }
+  #missionEmoji { font-size: clamp(30px, 6vw, 44px); }
+  #missionName { font-size: clamp(18px, 4vw, 26px); font-weight: bold; color: #444; }
+  .miniBtn {
+    border: none;
+    border-radius: 14px;
+    padding: 8px 12px;
+    font-size: clamp(13px, 2.6vw, 16px);
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.15);
+  }
+  #nextBtn { background: #ffe27a; }
+  #doneBtn { background: #a5ffb0; }
+  .miniBtn:active { transform: translateY(2px); box-shadow: none; }
+
+  #canvasWrap {
+    flex: 1;
+    margin: 6px 8px;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #ffffff;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+    position: relative;
+  }
+  #canvas { display: block; touch-action: none; width: 100%; height: 100%; }
+
+  #toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 8px;
+  }
+  #colors {
+    display: flex;
+    gap: 6px;
+    background: #fff;
+    padding: 6px;
+    border-radius: 16px;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.08);
+  }
+  .swatch {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px #ddd;
+    cursor: pointer;
+  }
+  .swatch.selected { box-shadow: 0 0 0 3px #333; }
+
+  #sizes {
+    display: flex;
+    gap: 6px;
+    background: #fff;
+    padding: 6px;
+    border-radius: 16px;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.08);
+    align-items: center;
+  }
+  .sizeBtn {
+    border: none;
+    background: #f1f1f1;
+    border-radius: 10px;
+    width: 34px; height: 34px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .sizeBtn.selected { background: #ffd166; }
+  .sizeDot { border-radius: 50%; background: #333; }
+
+  #actions {
+    display: flex;
+    gap: 8px;
+  }
+  #actions button {
+    border: none;
+    border-radius: 14px;
+    padding: 8px 10px;
+    font-size: 20px;
+    cursor: pointer;
+    background: #fff;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.08);
+  }
+  #actions button:active { transform: translateY(2px); box-shadow: none; }
+  #eraserBtn.selected { background: #cde8ff; }
+
+  #stars {
+    position: fixed;
+    top: 8px; right: 12px;
+    background: #fff;
+    border-radius: 14px;
+    padding: 6px 10px;
+    font-weight: bold;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.08);
+    font-size: 14px;
+    color: #d98c00;
+  }
+
+  #toast {
+    position: fixed;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    background: #fff;
+    padding: 20px 30px;
+    border-radius: 24px;
+    font-size: clamp(24px, 6vw, 40px);
+    font-weight: bold;
+    color: #ff5fa2;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s ease;
+    z-index: 50;
+    text-align: center;
+  }
+  #toast.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stars">⭐ <span id="starCount">0</span></div>
+  <header>
+    <h1>🎨 세상의 모든 것 그리기!</h1>
+  </header>
+
+  <div id="mission">
+    <span id="missionEmoji">🐶</span>
+    <span id="missionName">강아지</span>
+    <button class="miniBtn" id="nextBtn">다음 그림 🔄</button>
+    <button class="miniBtn" id="doneBtn">다 그렸어요! ✅</button>
+  </div>
+
+  <div id="canvasWrap">
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div id="toolbar">
+    <div id="colors"></div>
+    <div id="sizes"></div>
+    <div id="actions">
+      <button id="eraserBtn" title="지우개">🧽</button>
+      <button id="undoBtn" title="되돌리기">↩️</button>
+      <button id="clearBtn" title="전체 지우기">🗑️</button>
+      <button id="saveBtn" title="저장하기">💾</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+  // ---------- 그릴 것 목록: 세상의 모든 것 ----------
+  const MISSIONS = [
+    ["🐶","강아지"],["🐱","고양이"],["🦁","사자"],["🐯","호랑이"],["🐘","코끼리"],
+    ["🦒","기린"],["🐻","곰"],["🐼","판다"],["🐰","토끼"],["🦊","여우"],
+    ["🐺","늑대"],["🐷","돼지"],["🐮","소"],["🐴","말"],["🐑","양"],
+    ["🐵","원숭이"],["🐔","닭"],["🐧","펭귄"],["🦉","부엉이"],["🦅","독수리"],
+    ["🐟","물고기"],["🦈","상어"],["🐳","고래"],["🐬","돌고래"],["🐙","문어"],
+    ["🦀","게"],["🐢","거북이"],["🐍","뱀"],["🐸","개구리"],["🦋","나비"],
+    ["🐝","꿀벌"],["🐞","무당벌레"],["🐌","달팽이"],["🦕","공룡"],["🦖","티라노사우루스"],
+    ["🦄","유니콘"],["🐉","용"],
+    ["🍎","사과"],["🍌","바나나"],["🍓","딸기"],["🍉","수박"],["🍇","포도"],
+    ["🍊","오렌지"],["🍍","파인애플"],["🎂","케이크"],["🍦","아이스크림"],["🍕","피자"],
+    ["🍔","햄버거"],["🍗","치킨"],["🍜","라면"],["🍙","김밥"],["🍩","도넛"],
+    ["🍬","사탕"],["🍫","초콜릿"],["🍪","쿠키"],
+    ["🚗","자동차"],["🚌","버스"],["🚂","기차"],["✈️","비행기"],["🚢","배"],
+    ["🚲","자전거"],["🏍️","오토바이"],["🚀","로켓"],["🚁","헬리콥터"],["🚒","소방차"],
+    ["🚓","경찰차"],["🚑","구급차"],["🚚","트럭"],["🎈","열기구"],
+    ["🌳","나무"],["🌸","꽃"],["🌻","해바라기"],["🌈","무지개"],["☀️","해님"],
+    ["🌙","달님"],["⭐","별"],["☁️","구름"],["⛄","눈사람"],["⛰️","산"],
+    ["🌊","파도"],["🌋","화산"],["🏜️","사막"],["🏝️","섬"],
+    ["🌍","지구"],["👨‍🚀","우주비행사"],["👽","외계인"],["🪐","토성"],["☄️","별똥별"],
+    ["👨‍🚒","소방관"],["👩‍⚕️","의사"],["👮","경찰관"],["👨‍🍳","요리사"],["👩‍🏫","선생님"],
+    ["👸","공주"],["🤴","왕자"],["🧙","마법사"],["🤖","로봇"],["🦸","슈퍼히어로"],
+    ["🏠","집"],["🏰","성"],["🏫","학교"],["🏥","병원"],["🎡","놀이공원"],
+    ["🗼","등대"],["🌉","다리"],
+    ["☂️","우산"],["⌚","시계"],["📚","책"],["🎸","기타"],["🎹","피아노"],
+    ["⚽","축구공"],["⚾","야구공"],["🪁","연"],
+    ["❄️","눈"],["🌧️","비"],["⚡","번개"],["😄","웃는 얼굴"],["😢","우는 얼굴"],
+    ["❤️","하트"]
+  ];
+
+  const COLORS = [
+    "#000000","#7f7f7f","#ffffff","#ff3b30","#ff9500","#ffcc00",
+    "#4cd964","#34c759","#5ac8fa","#007aff","#5856d6","#af52de",
+    "#ff2d95","#a2845e","#8b572a","#c69c6d"
+  ];
+  const SIZES = [3, 8, 16, 28];
+
+  // ---------- 상태 ----------
+  let currentColor = "#000000";
+  let currentSize = 8;
+  let isEraser = false;
+  let drawing = false;
+  let lastX = 0, lastY = 0;
+  let missionIndex = -1;
+  let stars = parseInt(localStorage.getItem("worldDrawGame_stars") || "0", 10);
+
+  // ---------- 캔버스 초기화 ----------
+  const canvas = document.getElementById("canvas");
+  const wrap = document.getElementById("canvasWrap");
+  const ctx = canvas.getContext("2d");
+
+  function setupCanvas(){
+    const rect = wrap.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.height * dpr);
+    canvas.style.width = rect.width + "px";
+    canvas.style.height = rect.height + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, rect.width, rect.height);
+  }
+  setupCanvas();
+
+  function getPos(e){
+    const rect = canvas.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }
+
+  // ---------- undo ----------
+  let undoStack = [];
+  function saveUndoState(){
+    try {
+      undoStack.push(canvas.toDataURL());
+      if (undoStack.length > 20) undoStack.shift();
+    } catch(e){}
+  }
+  function undo(){
+    if (undoStack.length === 0) return;
+    const dataUrl = undoStack.pop();
+    const img = new Image();
+    img.onload = function(){
+      const rect = wrap.getBoundingClientRect();
+      ctx.save();
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.clearRect(0,0,canvas.width, canvas.height);
+      ctx.restore();
+      ctx.drawImage(img, 0, 0, rect.width, rect.height);
+    };
+    img.src = dataUrl;
+  }
+
+  // ---------- 그리기 ----------
+  function startDraw(e){
+    saveUndoState();
+    drawing = true;
+    const p = getPos(e);
+    lastX = p.x; lastY = p.y;
+    ctx.globalCompositeOperation = isEraser ? "destination-out" : "source-over";
+    ctx.fillStyle = currentColor;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, currentSize/2, 0, Math.PI*2);
+    ctx.fill();
+  }
+  function moveDraw(e){
+    if (!drawing) return;
+    const p = getPos(e);
+    ctx.strokeStyle = currentColor;
+    ctx.lineWidth = currentSize;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    lastX = p.x; lastY = p.y;
+  }
+  function endDraw(){
+    drawing = false;
+    ctx.globalCompositeOperation = "source-over";
+  }
+
+  canvas.addEventListener("pointerdown", (e)=>{ canvas.setPointerCapture(e.pointerId); startDraw(e); });
+  canvas.addEventListener("pointermove", moveDraw);
+  canvas.addEventListener("pointerup", endDraw);
+  canvas.addEventListener("pointercancel", endDraw);
+  canvas.addEventListener("pointerleave", ()=>{ if(drawing) endDraw(); });
+
+  // ---------- 색상 팔레트 ----------
+  const colorsWrap = document.getElementById("colors");
+  COLORS.forEach((c, i) => {
+    const sw = document.createElement("div");
+    sw.className = "swatch" + (c === currentColor ? " selected" : "");
+    sw.style.background = c;
+    sw.addEventListener("click", () => {
+      currentColor = c;
+      isEraser = false;
+      document.getElementById("eraserBtn").classList.remove("selected");
+      document.querySelectorAll(".swatch").forEach(s => s.classList.remove("selected"));
+      sw.classList.add("selected");
+    });
+    colorsWrap.appendChild(sw);
+  });
+
+  // ---------- 브러시 크기 ----------
+  const sizesWrap = document.getElementById("sizes");
+  SIZES.forEach((s) => {
+    const btn = document.createElement("button");
+    btn.className = "sizeBtn" + (s === currentSize ? " selected" : "");
+    const dot = document.createElement("div");
+    dot.className = "sizeDot";
+    const d = Math.min(24, 4 + s);
+    dot.style.width = d + "px";
+    dot.style.height = d + "px";
+    btn.appendChild(dot);
+    btn.addEventListener("click", () => {
+      currentSize = s;
+      document.querySelectorAll(".sizeBtn").forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+    });
+    sizesWrap.appendChild(btn);
+  });
+
+  // ---------- 도구 버튼 ----------
+  const eraserBtn = document.getElementById("eraserBtn");
+  eraserBtn.addEventListener("click", () => {
+    isEraser = !isEraser;
+    eraserBtn.classList.toggle("selected", isEraser);
+  });
+  document.getElementById("undoBtn").addEventListener("click", undo);
+  document.getElementById("clearBtn").addEventListener("click", () => {
+    if (!confirm("전체 그림을 지울까요?")) return;
+    saveUndoState();
+    const rect = wrap.getBoundingClientRect();
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, rect.width, rect.height);
+  });
+  document.getElementById("saveBtn").addEventListener("click", () => {
+    const link = document.createElement("a");
+    const name = document.getElementById("missionName").textContent;
+    const date = new Date().toISOString().slice(0,10);
+    link.download = `내그림_${name}_${date}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  });
+
+  // ---------- 미션(그릴 것) ----------
+  function pickMission(){
+    let idx;
+    do {
+      idx = Math.floor(Math.random() * MISSIONS.length);
+    } while (idx === missionIndex && MISSIONS.length > 1);
+    missionIndex = idx;
+    document.getElementById("missionEmoji").textContent = MISSIONS[idx][0];
+    document.getElementById("missionName").textContent = MISSIONS[idx][1];
+  }
+  document.getElementById("nextBtn").addEventListener("click", pickMission);
+
+  function showToast(text){
+    const toast = document.getElementById("toast");
+    toast.textContent = text;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 1100);
+  }
+
+  document.getElementById("doneBtn").addEventListener("click", () => {
+    stars += 1;
+    localStorage.setItem("worldDrawGame_stars", String(stars));
+    document.getElementById("starCount").textContent = stars;
+    showToast("정말 잘 그렸어요! 🎉⭐");
+    setTimeout(() => {
+      const rect = wrap.getBoundingClientRect();
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, rect.width, rect.height);
+      undoStack = [];
+      pickMission();
+    }, 1200);
+  });
+
+  // ---------- 시작 ----------
+  document.getElementById("starCount").textContent = stars;
+  pickMission();
+})();
+</script>
+</body>
+</html>
