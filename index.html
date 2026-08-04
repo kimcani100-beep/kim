@@ -3,9 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="color-scheme" content="light only">
 <title>세상의 모든 것 그리기!</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root { color-scheme: light only; }
   html, body {
     margin: 0; padding: 0; height: 100%;
     font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
@@ -15,41 +17,38 @@
   }
   #app { display: flex; flex-direction: column; height: 100%; }
 
-  header {
-    text-align: center;
-    padding: 8px 6px 4px;
-  }
-  header h1 {
-    margin: 0;
-    font-size: clamp(18px, 4vw, 28px);
-    color: #ff5fa2;
-    text-shadow: 1px 1px 0 #fff, 2px 2px 0 #ffd166;
-  }
-
   #mission {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 8px;
     background: #fff;
-    border-radius: 20px;
-    margin: 4px auto;
-    padding: 10px 16px;
-    width: min(94%, 640px);
-    box-shadow: 0 4px 0 rgba(0,0,0,0.08);
+    border-radius: 16px;
+    margin: 6px auto 0;
+    padding: 6px 10px;
+    width: min(96%, 700px);
+    box-shadow: 0 3px 0 rgba(0,0,0,0.08);
+    flex-wrap: wrap;
   }
-  #missionEmoji { font-size: clamp(30px, 6vw, 44px); }
-  #missionName { font-size: clamp(18px, 4vw, 26px); font-weight: bold; color: #444; }
+  #missionEmoji { font-size: clamp(24px, 5vw, 36px); }
+  #missionName { font-size: clamp(16px, 3.6vw, 22px); font-weight: bold; color: #444; }
   .miniBtn {
     border: none;
-    border-radius: 14px;
-    padding: 8px 12px;
-    font-size: clamp(13px, 2.6vw, 16px);
+    border-radius: 12px;
+    padding: 6px 10px;
+    font-size: clamp(12px, 2.4vw, 15px);
     font-weight: bold;
     cursor: pointer;
-    box-shadow: 0 3px 0 rgba(0,0,0,0.15);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.15);
   }
-  #mission { flex-wrap: wrap; }
+  #stars {
+    background: #fff8e0;
+    border-radius: 12px;
+    padding: 6px 10px;
+    font-weight: bold;
+    font-size: clamp(12px, 2.4vw, 15px);
+    color: #d98c00;
+  }
   #nextBtn { background: #ffe27a; }
   #doneBtn { background: #a5ffb0; }
   #guideBtn { background: #ddd1ff; }
@@ -80,32 +79,34 @@
 
   #toolbar {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    padding: 8px;
+    gap: 5px;
+    padding: 5px 6px 8px;
     max-width: 100vw;
   }
-  #sizes, #actions { flex-wrap: wrap; max-width: 100%; }
-  #colors, #bgs {
+  #colors, #bgs, #toolRow {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-wrap: nowrap;
     max-width: 100%;
     gap: 6px;
     background: #fff;
-    padding: 6px;
-    border-radius: 16px;
-    box-shadow: 0 3px 0 rgba(0,0,0,0.08);
+    padding: 5px 8px;
+    border-radius: 14px;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.08);
     align-items: center;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
   }
+  #colors::-webkit-scrollbar, #bgs::-webkit-scrollbar, #toolRow::-webkit-scrollbar { display: none; }
   #bgs::before {
     content: "🖼️";
-    font-size: 18px;
+    font-size: 16px;
   }
   .bgswatch {
-    width: 32px; height: 32px;
+    flex: 0 0 auto;
+    width: 34px; height: 30px;
     border-radius: 8px;
     border: 2px solid #fff;
     box-shadow: 0 0 0 2px #ddd;
@@ -115,61 +116,44 @@
   }
   .bgswatch.selected { box-shadow: 0 0 0 3px #333; }
   .swatch {
-    width: 28px; height: 28px;
+    flex: 0 0 auto;
+    width: 26px; height: 26px;
     border-radius: 50%;
-    border: 3px solid #fff;
+    border: 2px solid #fff;
     box-shadow: 0 0 0 2px #ddd;
     cursor: pointer;
   }
   .swatch.selected { box-shadow: 0 0 0 3px #333; }
 
-  #sizes {
+  #sizes, #actions {
     display: flex;
+    flex-wrap: nowrap;
     gap: 6px;
-    background: #fff;
-    padding: 6px;
-    border-radius: 16px;
-    box-shadow: 0 3px 0 rgba(0,0,0,0.08);
     align-items: center;
   }
   .sizeBtn {
+    flex: 0 0 auto;
     border: none;
     background: #f1f1f1;
-    border-radius: 10px;
-    width: 34px; height: 34px;
+    border-radius: 8px;
+    width: 30px; height: 30px;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
   }
   .sizeBtn.selected { background: #ffd166; }
   .sizeDot { border-radius: 50%; background: #333; }
-
-  #actions {
-    display: flex;
-    gap: 8px;
-  }
+  #toolDivider { width: 2px; height: 24px; background: #eee; border-radius: 2px; flex: 0 0 auto; }
   #actions button {
+    flex: 0 0 auto;
     border: none;
-    border-radius: 14px;
-    padding: 8px 10px;
-    font-size: 20px;
+    border-radius: 10px;
+    padding: 4px 8px;
+    font-size: 17px;
     cursor: pointer;
-    background: #fff;
-    box-shadow: 0 3px 0 rgba(0,0,0,0.08);
+    background: #f1f1f1;
   }
-  #actions button:active { transform: translateY(2px); box-shadow: none; }
+  #actions button:active { transform: translateY(2px); }
   #eraserBtn.selected { background: #cde8ff; }
-
-  #stars {
-    position: fixed;
-    top: 8px; right: 12px;
-    background: #fff;
-    border-radius: 14px;
-    padding: 6px 10px;
-    font-weight: bold;
-    box-shadow: 0 3px 0 rgba(0,0,0,0.08);
-    font-size: 14px;
-    color: #d98c00;
-  }
 
   #toast {
     position: fixed;
@@ -258,11 +242,6 @@
 </head>
 <body>
 <div id="app">
-  <div id="stars">⭐ <span id="starCount">0</span></div>
-  <header>
-    <h1>🎨 세상의 모든 것 그리기!</h1>
-  </header>
-
   <div id="mission">
     <span id="missionEmoji">🐶</span>
     <span id="missionName">강아지</span>
@@ -270,6 +249,7 @@
     <button class="miniBtn" id="nextBtn">다음 그림 🔄</button>
     <button class="miniBtn" id="doneBtn">다 그렸어요! ✅</button>
     <button class="miniBtn" id="guideBtn">밑그림 👻</button>
+    <span id="stars">⭐ <span id="starCount">0</span></span>
   </div>
 
   <div id="canvasWrap">
@@ -280,12 +260,15 @@
   <div id="toolbar">
     <div id="bgs" title="배경 고르기"></div>
     <div id="colors"></div>
-    <div id="sizes"></div>
-    <div id="actions">
-      <button id="eraserBtn" title="지우개">🧽</button>
-      <button id="undoBtn" title="되돌리기">↩️</button>
-      <button id="clearBtn" title="전체 지우기">🗑️</button>
-      <button id="saveBtn" title="저장하기">💾</button>
+    <div id="toolRow">
+      <div id="sizes"></div>
+      <div id="toolDivider"></div>
+      <div id="actions">
+        <button id="eraserBtn" title="지우개">🧽</button>
+        <button id="undoBtn" title="되돌리기">↩️</button>
+        <button id="clearBtn" title="전체 지우기">🗑️</button>
+        <button id="saveBtn" title="저장하기">💾</button>
+      </div>
     </div>
   </div>
 </div>
