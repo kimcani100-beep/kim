@@ -356,6 +356,15 @@
       '<rect y="510" width="400" height="190" fill="#6b6f76"/>' +
       '<g fill="#fff"><rect x="20" y="595" width="50" height="12" rx="6"/><rect x="120" y="595" width="50" height="12" rx="6"/><rect x="220" y="595" width="50" height="12" rx="6"/><rect x="320" y="595" width="50" height="12" rx="6"/></g>' +
       '</svg>' },
+    { key:"field", name:"축구장", svg: SVG_HEAD +
+      '<rect width="400" height="260" fill="#bfe9ff"/>' +
+      '<circle cx="330" cy="80" r="38" fill="#ffd93d"/>' +
+      '<ellipse cx="100" cy="90" rx="52" ry="20" fill="#fff" opacity="0.9"/>' +
+      '<rect y="260" width="400" height="440" fill="#58b944"/>' +
+      '<g fill="#6ecf5a"><rect y="310" width="400" height="55"/><rect y="420" width="400" height="55"/><rect y="530" width="400" height="55"/><rect y="640" width="400" height="55"/></g>' +
+      '<g fill="none" stroke="#ffffff" stroke-width="6" opacity="0.9"><rect x="20" y="285" width="360" height="395"/><line x1="20" y1="480" x2="380" y2="480"/><ellipse cx="200" cy="480" rx="75" ry="30"/></g>' +
+      '<circle cx="200" cy="480" r="7" fill="#fff"/>' +
+      '</svg>' },
     { key:"space", name:"우주", dark:true, svg: SVG_HEAD +
       '<defs><linearGradient id="sp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b0530"/><stop offset="1" stop-color="#221244"/></linearGradient></defs>' +
       '<rect width="400" height="700" fill="url(#sp)"/>' +
@@ -428,8 +437,11 @@
       ["🐺","늑대"],["🐷","돼지"],["🐮","소"],["🐴","말"],["🐑","양"],
       ["🐵","원숭이"],["🐔","닭"],["🐸","개구리"],["🦋","나비"],["🐝","꿀벌"],
       ["🐞","무당벌레"],["🐌","달팽이"],["🐍","뱀"],["🦕","공룡"],["🦖","티라노사우루스"],
-      ["🌳","나무"],["🌸","꽃"],["🌻","해바라기"],["⚽","축구공"],["⚾","야구공"],
+      ["🌳","나무"],["🌸","꽃"],["🌻","해바라기"],["⚾","야구공"],
       ["⛰️","산"],["🌋","화산"]
+    ],
+    field: [
+      ["⚽🏃","축구선수"],["🥅","골대"],["⚽","축구공"],["🇰🇷","태극기"]
     ],
     underwater: [
       ["🐟","물고기"],["🦈","상어"],["🐳","고래"],["🐬","돌고래"],["🐙","문어"],
@@ -689,11 +701,18 @@
   });
 
   // ---------- 미션(그릴 것) ----------
+  function glyphCount(str){
+    try {
+      return [...new Intl.Segmenter("ko", { granularity: "grapheme" }).segment(str)].length;
+    } catch(e) { return 1; }
+  }
   function setMission(idx){
     missionIndex = idx;
     document.getElementById("missionEmoji").textContent = MISSIONS[idx][0];
     document.getElementById("missionName").textContent = MISSIONS[idx][1];
-    document.getElementById("guide").textContent = MISSIONS[idx][0];
+    const guide = document.getElementById("guide");
+    guide.textContent = MISSIONS[idx][0];
+    guide.style.fontSize = glyphCount(MISSIONS[idx][0]) > 1 ? "min(38vh, 38vw)" : "min(60vh, 60vw)";
     setBg(sceneIndex[MISSIONS[idx][2]], false);
   }
   function pickMission(){
@@ -716,6 +735,7 @@
     seaside: "⛱️ 바닷가",
     sky: "☁️ 하늘",
     road: "🚗 탈것",
+    field: "⚽ 축구장",
     space: "🪐 우주",
     night: "🌙 밤",
     snow: "⛄ 겨울",
