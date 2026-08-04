@@ -105,11 +105,13 @@
     font-size: 18px;
   }
   .bgswatch {
-    width: 28px; height: 28px;
+    width: 32px; height: 32px;
     border-radius: 8px;
     border: 2px solid #fff;
     box-shadow: 0 0 0 2px #ddd;
     cursor: pointer;
+    background-size: cover;
+    background-position: center;
   }
   .bgswatch.selected { box-shadow: 0 0 0 3px #333; }
   .swatch {
@@ -230,36 +232,184 @@
 
 <script>
 (function(){
-  // ---------- 그릴 것 목록: 세상의 모든 것 ----------
-  const MISSIONS = [
-    ["🐶","강아지"],["🐱","고양이"],["🦁","사자"],["🐯","호랑이"],["🐘","코끼리"],
-    ["🦒","기린"],["🐻","곰"],["🐼","판다"],["🐰","토끼"],["🦊","여우"],
-    ["🐺","늑대"],["🐷","돼지"],["🐮","소"],["🐴","말"],["🐑","양"],
-    ["🐵","원숭이"],["🐔","닭"],["🐧","펭귄"],["🦉","부엉이"],["🦅","독수리"],
-    ["🐟","물고기"],["🦈","상어"],["🐳","고래"],["🐬","돌고래"],["🐙","문어"],
-    ["🦀","게"],["🐢","거북이"],["🐍","뱀"],["🐸","개구리"],["🦋","나비"],
-    ["🐝","꿀벌"],["🐞","무당벌레"],["🐌","달팽이"],["🦕","공룡"],["🦖","티라노사우루스"],
-    ["🦄","유니콘"],["🐉","용"],
-    ["🍎","사과"],["🍌","바나나"],["🍓","딸기"],["🍉","수박"],["🍇","포도"],
-    ["🍊","오렌지"],["🍍","파인애플"],["🎂","케이크"],["🍦","아이스크림"],["🍕","피자"],
-    ["🍔","햄버거"],["🍗","치킨"],["🍜","라면"],["🍙","김밥"],["🍩","도넛"],
-    ["🍬","사탕"],["🍫","초콜릿"],["🍪","쿠키"],
-    ["🚗","자동차"],["🚌","버스"],["🚂","기차"],["✈️","비행기"],["🚢","배"],
-    ["🚲","자전거"],["🏍️","오토바이"],["🚀","로켓"],["🚁","헬리콥터"],["🚒","소방차"],
-    ["🚓","경찰차"],["🚑","구급차"],["🚚","트럭"],["🎈","열기구"],
-    ["🌳","나무"],["🌸","꽃"],["🌻","해바라기"],["🌈","무지개"],["☀️","해님"],
-    ["🌙","달님"],["⭐","별"],["☁️","구름"],["⛄","눈사람"],["⛰️","산"],
-    ["🌊","파도"],["🌋","화산"],["🏜️","사막"],["🏝️","섬"],
-    ["🌍","지구"],["👨‍🚀","우주비행사"],["👽","외계인"],["🪐","토성"],["☄️","별똥별"],
-    ["👨‍🚒","소방관"],["👩‍⚕️","의사"],["👮","경찰관"],["👨‍🍳","요리사"],["👩‍🏫","선생님"],
-    ["👸","공주"],["🤴","왕자"],["🧙","마법사"],["🤖","로봇"],["🦸","슈퍼히어로"],
-    ["🏠","집"],["🏰","성"],["🏫","학교"],["🏥","병원"],["🎡","놀이공원"],
-    ["🗼","등대"],["🌉","다리"],
-    ["☂️","우산"],["⌚","시계"],["📚","책"],["🎸","기타"],["🎹","피아노"],
-    ["⚽","축구공"],["⚾","야구공"],["🪁","연"],
-    ["❄️","눈"],["🌧️","비"],["⚡","번개"],["😄","웃는 얼굴"],["😢","우는 얼굴"],
-    ["❤️","하트"]
+  // ---------- 배경 그림 12가지 (SVG, 세로 400x700 기준) ----------
+  const SVG_HEAD = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 700" preserveAspectRatio="xMidYMid slice">';
+
+  const SCENES = [
+    { key:"meadow", name:"풀밭 농장", svg: SVG_HEAD +
+      '<rect width="400" height="700" fill="#bfe9ff"/>' +
+      '<circle cx="330" cy="90" r="45" fill="#ffd93d"/>' +
+      '<ellipse cx="90" cy="110" rx="55" ry="22" fill="#fff" opacity="0.9"/>' +
+      '<ellipse cx="230" cy="60" rx="45" ry="18" fill="#fff" opacity="0.85"/>' +
+      '<ellipse cx="200" cy="740" rx="340" ry="280" fill="#8fdc72"/>' +
+      '<ellipse cx="430" cy="790" rx="310" ry="240" fill="#5cbf4a"/>' +
+      '<polygon points="258,425 315,372 372,425" fill="#ff6b6b"/>' +
+      '<rect x="270" y="425" width="90" height="68" fill="#ffe3b3"/>' +
+      '<rect x="303" y="452" width="24" height="41" fill="#a5673f"/>' +
+      '<rect x="280" y="438" width="18" height="18" fill="#9ad6ff"/>' +
+      '<g fill="#d9a066"><rect x="22" y="478" width="10" height="46"/><rect x="52" y="478" width="10" height="46"/><rect x="82" y="478" width="10" height="46"/><rect x="14" y="490" width="86" height="8"/></g>' +
+      '<circle cx="60" cy="620" r="10" fill="#ff8fb3"/><circle cx="142" cy="662" r="9" fill="#ffd93d"/><circle cx="322" cy="640" r="10" fill="#ff8fb3"/><circle cx="250" cy="600" r="8" fill="#fff"/>' +
+      '</svg>' },
+    { key:"underwater", name:"바닷속", dark:false, svg: SVG_HEAD +
+      '<defs><linearGradient id="uw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fd8ff"/><stop offset="1" stop-color="#0a5a9e"/></linearGradient></defs>' +
+      '<rect width="400" height="700" fill="url(#uw)"/>' +
+      '<ellipse cx="200" cy="710" rx="290" ry="75" fill="#f2dc9b"/>' +
+      '<path d="M40 700 q-15 -60 5 -110 q18 -45 -5 -90" stroke="#2e9e63" stroke-width="12" fill="none" stroke-linecap="round"/>' +
+      '<path d="M360 700 q15 -50 -5 -100 q-15 -40 8 -80" stroke="#37b374" stroke-width="10" fill="none" stroke-linecap="round"/>' +
+      '<g fill="#fff" opacity="0.5"><circle cx="90" cy="200" r="8"/><circle cx="110" cy="158" r="5"/><circle cx="300" cy="300" r="9"/><circle cx="322" cy="252" r="5"/><circle cx="200" cy="120" r="6"/></g>' +
+      '<circle cx="120" cy="678" r="14" fill="#ff9f43"/><circle cx="290" cy="672" r="12" fill="#ff8fb3"/>' +
+      '</svg>' },
+    { key:"seaside", name:"바닷가", svg: SVG_HEAD +
+      '<rect width="400" height="330" fill="#aee6ff"/>' +
+      '<circle cx="70" cy="72" r="38" fill="#ffd93d"/>' +
+      '<ellipse cx="280" cy="92" rx="52" ry="20" fill="#fff" opacity="0.9"/>' +
+      '<rect y="300" width="400" height="400" fill="#2a9df4"/>' +
+      '<g stroke="#dff4ff" stroke-width="6" fill="none"><path d="M0 345 q25 -14 50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0" opacity="0.85"/><path d="M-25 430 q25 -14 50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0" opacity="0.6"/><path d="M0 520 q25 -14 50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0" opacity="0.45"/><path d="M-25 610 q25 -14 50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0" opacity="0.3"/></g>' +
+      '</svg>' },
+    { key:"sky", name:"하늘", svg: SVG_HEAD +
+      '<defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8ecfff"/><stop offset="1" stop-color="#eaf8ff"/></linearGradient></defs>' +
+      '<rect width="400" height="700" fill="url(#sk)"/>' +
+      '<circle cx="330" cy="80" r="42" fill="#ffd93d"/>' +
+      '<ellipse cx="80" cy="140" rx="60" ry="24" fill="#fff" opacity="0.95"/>' +
+      '<ellipse cx="250" cy="240" rx="48" ry="19" fill="#fff" opacity="0.85"/>' +
+      '<ellipse cx="120" cy="420" rx="65" ry="25" fill="#fff" opacity="0.9"/>' +
+      '<ellipse cx="310" cy="560" rx="55" ry="22" fill="#fff" opacity="0.85"/>' +
+      '<g stroke="#5a6b7a" stroke-width="4" fill="none" stroke-linecap="round"><path d="M180 130 q10 -12 20 0 q10 -12 20 0"/><path d="M60 300 q8 -10 16 0 q8 -10 16 0"/></g>' +
+      '</svg>' },
+    { key:"road", name:"도로", svg: SVG_HEAD +
+      '<rect width="400" height="700" fill="#b3e3ff"/>' +
+      '<ellipse cx="90" cy="80" rx="50" ry="20" fill="#fff" opacity="0.9"/>' +
+      '<circle cx="330" cy="70" r="35" fill="#ffd93d"/>' +
+      '<g><rect x="0" y="250" width="80" height="220" fill="#ffb3ba"/><rect x="90" y="200" width="90" height="270" fill="#ffdfba"/><rect x="190" y="272" width="70" height="198" fill="#baffc9"/><rect x="270" y="222" width="110" height="248" fill="#bae1ff"/></g>' +
+      '<g fill="#fff" opacity="0.9"><rect x="15" y="280" width="20" height="24"/><rect x="45" y="280" width="20" height="24"/><rect x="15" y="330" width="20" height="24"/><rect x="45" y="330" width="20" height="24"/><rect x="108" y="230" width="22" height="26"/><rect x="142" y="230" width="22" height="26"/><rect x="108" y="285" width="22" height="26"/><rect x="142" y="285" width="22" height="26"/><rect x="205" y="300" width="18" height="22"/><rect x="232" y="300" width="18" height="22"/><rect x="290" y="250" width="22" height="26"/><rect x="324" y="250" width="22" height="26"/><rect x="290" y="305" width="22" height="26"/><rect x="324" y="305" width="22" height="26"/></g>' +
+      '<rect y="470" width="400" height="40" fill="#d8d8d8"/>' +
+      '<rect y="510" width="400" height="190" fill="#6b6f76"/>' +
+      '<g fill="#fff"><rect x="20" y="595" width="50" height="12" rx="6"/><rect x="120" y="595" width="50" height="12" rx="6"/><rect x="220" y="595" width="50" height="12" rx="6"/><rect x="320" y="595" width="50" height="12" rx="6"/></g>' +
+      '</svg>' },
+    { key:"space", name:"우주", dark:true, svg: SVG_HEAD +
+      '<defs><linearGradient id="sp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b0530"/><stop offset="1" stop-color="#221244"/></linearGradient></defs>' +
+      '<rect width="400" height="700" fill="url(#sp)"/>' +
+      '<g fill="#fff"><circle cx="40" cy="60" r="3"/><circle cx="120" cy="140" r="2"/><circle cx="210" cy="70" r="2.5"/><circle cx="370" cy="230" r="2"/><circle cx="60" cy="330" r="2.5"/><circle cx="330" cy="400" r="3"/><circle cx="150" cy="480" r="2"/><circle cx="250" cy="560" r="2.5"/><circle cx="80" cy="620" r="3"/><circle cx="350" cy="640" r="2"/><circle cx="190" cy="260" r="2"/><circle cx="290" cy="170" r="2"/></g>' +
+      '<circle cx="320" cy="110" r="42" fill="#ff9f68"/><ellipse cx="320" cy="116" rx="68" ry="15" fill="none" stroke="#ffd9a0" stroke-width="6"/>' +
+      '<circle cx="70" cy="520" r="22" fill="#7fe3d4"/>' +
+      '</svg>' },
+    { key:"night", name:"밤하늘", dark:true, svg: SVG_HEAD +
+      '<defs><linearGradient id="ni" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b1d51"/><stop offset="1" stop-color="#27386f"/></linearGradient></defs>' +
+      '<rect width="400" height="700" fill="url(#ni)"/>' +
+      '<circle cx="310" cy="110" r="48" fill="#fff3b0"/><circle cx="295" cy="95" r="10" fill="#f0e29a"/><circle cx="326" cy="132" r="7" fill="#f0e29a"/>' +
+      '<g fill="#fff"><circle cx="60" cy="80" r="3"/><circle cx="140" cy="170" r="2"/><circle cx="220" cy="90" r="2.5"/><circle cx="90" cy="280" r="2"/><circle cx="330" cy="300" r="2.5"/><circle cx="180" cy="380" r="2"/><circle cx="40" cy="450" r="2.5"/></g>' +
+      '<ellipse cx="110" cy="770" rx="340" ry="190" fill="#0a1638"/>' +
+      '<ellipse cx="390" cy="800" rx="310" ry="180" fill="#132250"/>' +
+      '</svg>' },
+    { key:"snow", name:"눈나라", svg: SVG_HEAD +
+      '<defs><linearGradient id="sn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfe8ff"/><stop offset="1" stop-color="#f4faff"/></linearGradient></defs>' +
+      '<rect width="400" height="700" fill="url(#sn)"/>' +
+      '<g fill="#fff"><circle cx="50" cy="90" r="6"/><circle cx="150" cy="60" r="5"/><circle cx="250" cy="120" r="6"/><circle cx="340" cy="70" r="5"/><circle cx="90" cy="220" r="5"/><circle cx="300" cy="260" r="6"/><circle cx="190" cy="320" r="5"/><circle cx="350" cy="380" r="5"/><circle cx="60" cy="400" r="6"/></g>' +
+      '<ellipse cx="200" cy="760" rx="340" ry="230" fill="#ffffff"/>' +
+      '<polygon points="80,505 108,560 52,560" fill="#3e9c6c"/><polygon points="80,540 115,610 45,610" fill="#2e7d5b"/>' +
+      '<polygon points="320,525 344,572 296,572" fill="#3e9c6c"/><polygon points="320,555 350,615 290,615" fill="#2e7d5b"/>' +
+      '</svg>' },
+    { key:"kitchen", name:"맛있는 식탁", svg: SVG_HEAD +
+      '<rect width="400" height="700" fill="#fff3dc"/>' +
+      '<g fill="#ffe1b8"><circle cx="60" cy="80" r="14"/><circle cx="200" cy="130" r="12"/><circle cx="330" cy="60" r="14"/><circle cx="120" cy="230" r="12"/><circle cx="300" cy="250" r="13"/><circle cx="40" cy="330" r="12"/><circle cx="360" cy="360" r="12"/></g>' +
+      '<rect y="430" width="400" height="270" fill="#ff8fa3"/>' +
+      '<g stroke="#ffffff" stroke-width="10" opacity="0.5"><line x1="0" y1="485" x2="400" y2="485"/><line x1="0" y1="570" x2="400" y2="570"/><line x1="0" y1="655" x2="400" y2="655"/><line x1="70" y1="430" x2="70" y2="700"/><line x1="200" y1="430" x2="200" y2="700"/><line x1="330" y1="430" x2="330" y2="700"/></g>' +
+      '<ellipse cx="200" cy="565" rx="145" ry="82" fill="#ffffff"/><ellipse cx="200" cy="565" rx="108" ry="60" fill="#f2f2f2"/>' +
+      '</svg>' },
+    { key:"castle", name:"동화나라", svg: SVG_HEAD +
+      '<defs><linearGradient id="ca" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd9ec"/><stop offset="1" stop-color="#cdbcff"/></linearGradient></defs>' +
+      '<rect width="400" height="700" fill="url(#ca)"/>' +
+      '<g fill="none" stroke-width="12"><path d="M-40 260 a170 170 0 0 1 340 0" stroke="#ff6b6b"/><path d="M-28 260 a158 158 0 0 1 316 0" stroke="#ffb347"/><path d="M-16 260 a146 146 0 0 1 292 0" stroke="#ffe066"/><path d="M-4 260 a134 134 0 0 1 268 0" stroke="#8fdc72"/><path d="M8 260 a122 122 0 0 1 244 0" stroke="#7fc8ff"/></g>' +
+      '<ellipse cx="60" cy="265" rx="55" ry="22" fill="#fff"/><ellipse cx="300" cy="268" rx="60" ry="24" fill="#fff"/>' +
+      '<ellipse cx="200" cy="760" rx="345" ry="220" fill="#b7e5a1"/>' +
+      '<g fill="#a98fe0"><rect x="240" y="440" width="30" height="95"/><rect x="302" y="415" width="36" height="120"/><rect x="368" y="440" width="30" height="95"/><rect x="252" y="482" width="130" height="55"/></g>' +
+      '<g fill="#7c5fbd"><polygon points="236,440 255,405 274,440"/><polygon points="298,415 320,375 342,415"/><polygon points="364,440 383,405 400,440"/></g>' +
+      '<g><line x1="320" y1="375" x2="320" y2="352" stroke="#7c5fbd" stroke-width="3"/><polygon points="320,352 342,359 320,366" fill="#ff6b6b"/></g>' +
+      '</svg>' },
+    { key:"city", name:"우리 동네", svg: SVG_HEAD +
+      '<rect width="400" height="700" fill="#cdeaff"/>' +
+      '<circle cx="60" cy="70" r="35" fill="#ffd93d"/>' +
+      '<ellipse cx="280" cy="90" rx="55" ry="22" fill="#fff" opacity="0.9"/>' +
+      '<g><rect x="10" y="290" width="85" height="230" fill="#ffcf9e"/><rect x="105" y="240" width="95" height="280" fill="#a9ddff"/><rect x="210" y="310" width="80" height="210" fill="#ffc4cf"/><rect x="300" y="260" width="90" height="260" fill="#c6f0b8"/></g>' +
+      '<g fill="#fff" opacity="0.9"><rect x="24" y="315" width="22" height="26"/><rect x="58" y="315" width="22" height="26"/><rect x="24" y="370" width="22" height="26"/><rect x="58" y="370" width="22" height="26"/><rect x="122" y="270" width="24" height="28"/><rect x="158" y="270" width="24" height="28"/><rect x="122" y="330" width="24" height="28"/><rect x="158" y="330" width="24" height="28"/><rect x="226" y="340" width="20" height="24"/><rect x="256" y="340" width="20" height="24"/><rect x="318" y="290" width="22" height="26"/><rect x="352" y="290" width="22" height="26"/><rect x="318" y="345" width="22" height="26"/><rect x="352" y="345" width="22" height="26"/></g>' +
+      '<rect y="520" width="400" height="180" fill="#9bd77f"/>' +
+      '<ellipse cx="200" cy="700" rx="130" ry="120" fill="#e8e0d2"/>' +
+      '</svg>' },
+    { key:"room", name:"내 방", svg: SVG_HEAD +
+      '<rect width="400" height="700" fill="#fdf3d8"/>' +
+      '<g fill="#ffd8e6"><circle cx="50" cy="60" r="10"/><circle cx="150" cy="110" r="9"/><circle cx="90" cy="220" r="10"/><circle cx="180" cy="320" r="9"/><circle cx="60" cy="420" r="10"/><circle cx="200" cy="60" r="9"/><circle cx="130" cy="470" r="9"/></g>' +
+      '<rect x="245" y="75" width="120" height="140" fill="#9ad6ff" stroke="#ffffff" stroke-width="12"/>' +
+      '<line x1="305" y1="75" x2="305" y2="215" stroke="#ffffff" stroke-width="8"/><line x1="245" y1="145" x2="365" y2="145" stroke="#ffffff" stroke-width="8"/>' +
+      '<circle cx="275" cy="105" r="14" fill="#ffd93d"/>' +
+      '<rect y="540" width="400" height="160" fill="#deb887"/>' +
+      '<g stroke="#c69b6a" stroke-width="4"><line x1="0" y1="590" x2="400" y2="590"/><line x1="0" y1="645" x2="400" y2="645"/></g>' +
+      '<ellipse cx="140" cy="620" rx="95" ry="32" fill="#ff9f9f" opacity="0.85"/>' +
+      '</svg>' }
   ];
+
+  const sceneIndex = {};
+  SCENES.forEach((s, i) => { sceneIndex[s.key] = i; });
+
+  // ---------- 그릴 것 목록: 주제별 배경과 짝지음 ----------
+  const GROUPS = {
+    meadow: [
+      ["🐶","강아지"],["🐱","고양이"],["🦁","사자"],["🐯","호랑이"],["🐘","코끼리"],
+      ["🦒","기린"],["🐻","곰"],["🐼","판다"],["🐰","토끼"],["🦊","여우"],
+      ["🐺","늑대"],["🐷","돼지"],["🐮","소"],["🐴","말"],["🐑","양"],
+      ["🐵","원숭이"],["🐔","닭"],["🐸","개구리"],["🦋","나비"],["🐝","꿀벌"],
+      ["🐞","무당벌레"],["🐌","달팽이"],["🐍","뱀"],["🦕","공룡"],["🦖","티라노사우루스"],
+      ["🌳","나무"],["🌸","꽃"],["🌻","해바라기"],["⚽","축구공"],["⚾","야구공"],
+      ["⛰️","산"],["🌋","화산"]
+    ],
+    underwater: [
+      ["🐟","물고기"],["🦈","상어"],["🐳","고래"],["🐬","돌고래"],["🐙","문어"],
+      ["🦀","게"],["🐢","거북이"]
+    ],
+    seaside: [
+      ["🌊","파도"],["🏝️","섬"],["🗼","등대"],["🚢","배"],["🏜️","사막"]
+    ],
+    sky: [
+      ["🦅","독수리"],["✈️","비행기"],["🚁","헬리콥터"],["🎈","열기구"],["🌈","무지개"],
+      ["☀️","해님"],["☁️","구름"],["🪁","연"],["🌧️","비"],["⚡","번개"]
+    ],
+    road: [
+      ["🚗","자동차"],["🚌","버스"],["🚂","기차"],["🚲","자전거"],["🏍️","오토바이"],
+      ["🚒","소방차"],["🚓","경찰차"],["🚑","구급차"],["🚚","트럭"]
+    ],
+    space: [
+      ["🚀","로켓"],["👨‍🚀","우주비행사"],["👽","외계인"],["🪐","토성"],["🌍","지구"],
+      ["☄️","별똥별"]
+    ],
+    night: [
+      ["🌙","달님"],["⭐","별"],["🦉","부엉이"]
+    ],
+    snow: [
+      ["⛄","눈사람"],["❄️","눈"],["🐧","펭귄"]
+    ],
+    kitchen: [
+      ["🍎","사과"],["🍌","바나나"],["🍓","딸기"],["🍉","수박"],["🍇","포도"],
+      ["🍊","오렌지"],["🍍","파인애플"],["🎂","케이크"],["🍦","아이스크림"],["🍕","피자"],
+      ["🍔","햄버거"],["🍗","치킨"],["🍜","라면"],["🍙","김밥"],["🍩","도넛"],
+      ["🍬","사탕"],["🍫","초콜릿"],["🍪","쿠키"],["👨‍🍳","요리사"]
+    ],
+    castle: [
+      ["👸","공주"],["🤴","왕자"],["🧙","마법사"],["🦄","유니콘"],["🐉","용"],["🏰","성"]
+    ],
+    city: [
+      ["🏠","집"],["🏫","학교"],["🏥","병원"],["🎡","놀이공원"],["🌉","다리"],
+      ["👨‍🚒","소방관"],["👩‍⚕️","의사"],["👮","경찰관"],["👩‍🏫","선생님"],["🤖","로봇"],
+      ["🦸","슈퍼히어로"]
+    ],
+    room: [
+      ["☂️","우산"],["⌚","시계"],["📚","책"],["🎸","기타"],["🎹","피아노"],
+      ["😄","웃는 얼굴"],["😢","우는 얼굴"],["❤️","하트"]
+    ]
+  };
+
+  const MISSIONS = [];
+  Object.keys(GROUPS).forEach(k => {
+    GROUPS[k].forEach(m => MISSIONS.push([m[0], m[1], k]));
+  });
 
   const COLORS = [
     "#000000","#7f7f7f","#ffffff","#ff3b30","#ff9500","#ffcc00",
@@ -268,19 +418,6 @@
   ];
   const SIZES = [3, 8, 16, 28];
 
-  // ---------- 배경 목록 (아래로 갈수록 진해지는 그라데이션) ----------
-  const BGS = [
-    { name:"흰색",   stops:[[0,"#ffffff"],[1,"#ffffff"]] },
-    { name:"하늘",   stops:[[0,"#9fd9ff"],[1,"#eaf8ff"]] },
-    { name:"바다",   stops:[[0,"#b3e6ff"],[0.45,"#56b9e8"],[1,"#0e6ba8"]] },
-    { name:"풀밭",   stops:[[0,"#a8e6ff"],[0.55,"#d9f7c5"],[1,"#58b944"]] },
-    { name:"노을",   stops:[[0,"#ffd166"],[0.5,"#ff8c69"],[1,"#b05fa0"]] },
-    { name:"분홍",   stops:[[0,"#ffe3f1"],[1,"#ffb3d9"]] },
-    { name:"밤하늘", stops:[[0,"#0b1d51"],[1,"#24356e"]], dark:true },
-    { name:"우주",   stops:[[0,"#05010f"],[1,"#1b1038"]], dark:true }
-  ];
-  let currentBg = 0;
-
   // ---------- 상태 ----------
   let currentColor = "#000000";
   let currentSize = 8;
@@ -288,6 +425,7 @@
   let drawing = false;
   let lastX = 0, lastY = 0;
   let missionIndex = -1;
+  let currentBg = 0;
   let stars = parseInt(localStorage.getItem("worldDrawGame_stars") || "0", 10);
 
   // ---------- 캔버스 초기화 ----------
@@ -379,31 +517,33 @@
   canvas.addEventListener("pointercancel", endDraw);
   canvas.addEventListener("pointerleave", ()=>{ if(drawing) endDraw(); });
 
-  // ---------- 배경 고르기 ----------
-  function bgCss(bg){
-    return "linear-gradient(to bottom, " + bg.stops.map(s => s[1] + " " + (s[0]*100) + "%").join(", ") + ")";
+  // ---------- 배경(장면) ----------
+  function sceneUrl(scene){
+    return 'url("data:image/svg+xml,' + encodeURIComponent(scene.svg) + '")';
   }
   function applyBg(){
-    const bg = BGS[currentBg];
-    wrap.style.background = bgCss(bg);
+    const bg = SCENES[currentBg];
+    wrap.style.background = sceneUrl(bg) + " center / cover no-repeat";
     const guide = document.getElementById("guide");
     guide.style.filter = bg.dark
       ? "opacity(0.5) brightness(1.15)"
-      : "opacity(0.35)";
+      : "opacity(0.4)";
+  }
+  function setBg(i, announce){
+    currentBg = i;
+    document.querySelectorAll(".bgswatch").forEach((s, j) => {
+      s.classList.toggle("selected", j === i);
+    });
+    applyBg();
+    if (announce) showToast("🖼️ " + SCENES[i].name + "!");
   }
   const bgsWrap = document.getElementById("bgs");
-  BGS.forEach((bg, i) => {
+  SCENES.forEach((bg, i) => {
     const sw = document.createElement("div");
     sw.className = "bgswatch" + (i === currentBg ? " selected" : "");
-    sw.style.background = bgCss(bg);
+    sw.style.backgroundImage = sceneUrl(bg);
     sw.title = bg.name;
-    sw.addEventListener("click", () => {
-      currentBg = i;
-      document.querySelectorAll(".bgswatch").forEach(s => s.classList.remove("selected"));
-      sw.classList.add("selected");
-      applyBg();
-      showToast("🖼️ " + bg.name + " 배경!");
-    });
+    sw.addEventListener("click", () => setBg(i, true));
     bgsWrap.appendChild(sw);
   });
   applyBg();
@@ -461,17 +601,21 @@
     out.width = canvas.width;
     out.height = canvas.height;
     const octx = out.getContext("2d");
-    const grad = octx.createLinearGradient(0, 0, 0, out.height);
-    BGS[currentBg].stops.forEach(s => grad.addColorStop(s[0], s[1]));
-    octx.fillStyle = grad;
-    octx.fillRect(0, 0, out.width, out.height);
-    octx.drawImage(canvas, 0, 0);
-    const link = document.createElement("a");
-    const name = document.getElementById("missionName").textContent;
-    const date = new Date().toISOString().slice(0,10);
-    link.download = `내그림_${name}_${date}.png`;
-    link.href = out.toDataURL("image/png");
-    link.click();
+    const img = new Image();
+    img.onload = function(){
+      const vw = 400, vh = 700;
+      const scale = Math.max(out.width / vw, out.height / vh);
+      const dw = vw * scale, dh = vh * scale;
+      octx.drawImage(img, (out.width - dw) / 2, (out.height - dh) / 2, dw, dh);
+      octx.drawImage(canvas, 0, 0);
+      const link = document.createElement("a");
+      const name = document.getElementById("missionName").textContent;
+      const date = new Date().toISOString().slice(0,10);
+      link.download = `내그림_${name}_${date}.png`;
+      link.href = out.toDataURL("image/png");
+      link.click();
+    };
+    img.src = "data:image/svg+xml," + encodeURIComponent(SCENES[currentBg].svg);
   });
 
   // ---------- 미션(그릴 것) ----------
@@ -484,6 +628,7 @@
     document.getElementById("missionEmoji").textContent = MISSIONS[idx][0];
     document.getElementById("missionName").textContent = MISSIONS[idx][1];
     document.getElementById("guide").textContent = MISSIONS[idx][0];
+    setBg(sceneIndex[MISSIONS[idx][2]], false);
   }
   document.getElementById("nextBtn").addEventListener("click", () => {
     clearCanvas();
