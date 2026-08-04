@@ -723,7 +723,12 @@
 
   // ---------- 스티커(도장) ----------
   const STAMPS = [
-    "👀","👁️","👃","👄","👅","👂","🖐️","💪",
+    "👀","👁️","👃","👄","👅",
+    "👂",["👂","flip"],
+    "🖐️",["🖐️","flip"],
+    "💪",["💪","flip"],
+    "🦵",["🦵","flip"],
+    "🦶",["🦶","flip"],
     "🎩","👑","🎀","🕶️","👓","🧢",
     "😀","😂","🥰","😎","🤪","🥳","😭","😡",
     "❤️","💛","💙","💚","💜","💖","💕",
@@ -746,17 +751,20 @@
     showToast("🖍️ 그리기!");
   });
   stampsWrap.appendChild(drawModeBtn);
-  STAMPS.forEach(s => {
+  STAMPS.forEach(item => {
+    const emoji = Array.isArray(item) ? item[0] : item;
+    const flip = Array.isArray(item);
     const btn = document.createElement("button");
     btn.className = "stampBtn";
-    btn.textContent = s;
+    btn.textContent = emoji;
+    if (flip) btn.style.transform = "scaleX(-1)";
     btn.addEventListener("click", () => {
       clearStampMode();
-      stampMode = s;
+      stampMode = { e: emoji, flip: flip };
       btn.classList.add("selected");
       isEraser = false;
       document.getElementById("eraserBtn").classList.remove("selected");
-      showToast(s + " 콕! 찍고 싶은 곳을 눌러요");
+      showToast(emoji + " 콕! 찍고 싶은 곳을 눌러요");
     });
     stampsWrap.appendChild(btn);
   });
@@ -764,10 +772,14 @@
     saveUndoState();
     const p = getPos(e);
     const size = ({ 3: 30, 8: 48, 16: 76, 28: 110 })[currentSize] || 48;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    if (stampMode.flip) ctx.scale(-1, 1);
     ctx.font = size + "px 'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(stampMode, p.x, p.y);
+    ctx.fillText(stampMode.e, 0, 0);
+    ctx.restore();
   }
 
   canvas.addEventListener("pointerdown", (e)=>{
