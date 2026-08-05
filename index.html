@@ -264,7 +264,7 @@
     #toolbar { gap: 7px; }
   }
 
-  #picker {
+  #picker, #stampBook {
     position: fixed;
     inset: 0;
     background: rgba(255, 250, 240, 0.98);
@@ -272,19 +272,19 @@
     display: none;
     flex-direction: column;
   }
-  #picker.open { display: flex; }
-  #pickerHead {
+  #picker.open, #stampBook.open { display: flex; }
+  #pickerHead, .pickHead {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 12px 16px;
   }
-  #pickerHead h2 {
+  #pickerHead h2, .pickHead h2 {
     margin: 0;
     font-size: clamp(18px, 4.5vw, 26px);
     color: #ff5fa2;
   }
-  #pickerClose {
+  #pickerClose, #stampClose {
     border: none;
     background: #ffe27a;
     border-radius: 14px;
@@ -294,11 +294,23 @@
     cursor: pointer;
     box-shadow: 0 3px 0 rgba(0,0,0,0.15);
   }
-  #pickerBody {
+  #pickerBody, #stampBody {
     flex: 1;
     overflow-y: auto;
     padding: 0 12px 24px;
     -webkit-overflow-scrolling: touch;
+  }
+  .stampGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+    gap: 8px;
+  }
+  .stampBig {
+    width: 100% !important;
+    height: 56px !important;
+    font-size: 32px !important;
+    background: #fff;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.08);
   }
   .pickGroup {
     margin: 14px 4px 6px;
@@ -379,6 +391,14 @@
     <button id="pickerClose">닫기 ✖</button>
   </div>
   <div id="pickerBody"></div>
+</div>
+
+<div id="stampBook">
+  <div class="pickHead">
+    <h2>😊 스티커 골라 붙이기!</h2>
+    <button id="stampClose">닫기 ✖</button>
+  </div>
+  <div id="stampBody"></div>
 </div>
 
 <script>
@@ -524,6 +544,30 @@
   const sceneIndex = {};
   SCENES.forEach((s, i) => { sceneIndex[s.key] = i; });
 
+  // ---------- 특별 밑그림: 발등 슛 (이모지에 없어서 직접 그림) ----------
+  const SPECIAL = {
+    "@kick":
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">' +
+      '<line x1="305" y1="70" x2="248" y2="192" stroke="#f6c99a" stroke-width="60" stroke-linecap="round"/>' +
+      '<rect x="250" y="10" width="120" height="85" rx="32" fill="#2a4d9b" transform="rotate(18 310 52)"/>' +
+      '<line x1="248" y1="192" x2="178" y2="288" stroke="#f6c99a" stroke-width="48" stroke-linecap="round"/>' +
+      '<line x1="200" y1="258" x2="172" y2="296" stroke="#e63946" stroke-width="50" stroke-linecap="round"/>' +
+      '<path d="M52 302 Q46 274 80 266 L162 290 Q188 299 182 326 L176 342 Q118 356 66 344 Z" fill="#2b2b2b"/>' +
+      '<path d="M64 346 Q120 358 178 344 L174 356 Q118 368 60 356 Z" fill="#e8e8e8"/>' +
+      '<g stroke="#fff" stroke-width="5"><line x1="120" y1="284" x2="142" y2="292"/><line x1="112" y1="296" x2="134" y2="304"/></g>' +
+      '<circle cx="92" cy="208" r="52" fill="#ffffff" stroke="#333" stroke-width="5"/>' +
+      '<polygon points="92,186 112,200 104,224 80,224 72,200" fill="#333"/>' +
+      '<g stroke="#333" stroke-width="4"><line x1="92" y1="186" x2="92" y2="158"/><line x1="112" y1="200" x2="138" y2="192"/><line x1="104" y1="224" x2="122" y2="246"/><line x1="80" y1="224" x2="62" y2="246"/><line x1="72" y1="200" x2="46" y2="192"/></g>' +
+      '<g stroke="#9aa7b5" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.8"><path d="M30 300 q-18 -30 2 -58"/><path d="M18 262 q-12 -26 6 -48"/></g>' +
+      '</svg>'
+  };
+  const specialImgs = {};
+  Object.keys(SPECIAL).forEach(k => {
+    const im = new Image();
+    im.src = "data:image/svg+xml," + encodeURIComponent(SPECIAL[k]);
+    specialImgs[k] = im;
+  });
+
   // ---------- 그릴 것 목록: 주제별 배경과 짝지음 ----------
   const GROUPS = {
     chars: [
@@ -543,7 +587,7 @@
     ],
     field: [
       ["⚽🏃","축구선수"],["⚽🏃","손흥민"],["⚽👦","축구하는 도윤이"],["⚽","축구공 캐릭터"],
-      ["🏃⚽","드리블"],["⚽🦵","슛!"],["⚽🥅","골인!"],["🧤","골키퍼"],
+      ["🏃⚽","드리블"],["⚽🦵","슛!"],["@kick","발등 슛"],["⚽🥅","골인!"],["🧤","골키퍼"],
       ["🥅","골대"],["⚽","축구공"],["👟","축구화"],["👕","유니폼"],
       ["🟨🟥","심판 카드"],["🚩","코너 깃발"],["⚽🇰🇷","국가대표"],
       ["🏆","우승컵"],["🏆🌍","월드컵 트로피"],["🥇","금메달"],["🏅","메달"],["📣","응원하기"],["🎉⚽","우승 파티"],
@@ -785,35 +829,44 @@
   function mid(a, b){ return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
 
   // ---------- 스티커(도장) ----------
-  const STAMPS = [
-    // 눈코입
-    "👀","👁️","👃","👄","👅","🦷","👂",["👂","flip"],
-    // 손·팔·다리·발
-    "🖐️",["🖐️","flip"],"👍","👏","💪",["💪","flip"],"🦵",["🦵","flip"],"🦶",["🦶","flip"],"👣",
-    // 신발·옷·장갑
-    "👟",["👟","flip"],"👞",["👞","flip"],"👠",["👠","flip"],"👢","🧦","🧤","👕","👖","👗","🧥","👔","🎒",
-    // 머리 꾸미기
-    "🎩","👑","🧢","👒","🎓","🎀","🕶️","👓","⌚",
-    // 표정
-    "😀","😂","🤣","😊","😍","🥰","😜","🤪","😎","🤩","🥳","😢","😭","😡","😱","🤗","😴","🤡","👻","💀","👽","🤖",
-    // 하트·별
-    "❤️","🧡","💛","💚","💙","💜","🖤","💖","💗","💘","⭐","🌟","✨","💫","🌈",
-    // 만화 효과
-    "💥","💦","💨","🔥","⚡","❄️","💤","💢","💬","💭","❗","❓",
-    // 자연
-    "☀️","🌙","☁️","☔","⛄","🌸","🌻","🍀",
-    // 동물 친구
-    "🐶","🐱","🐰","🐻","🐼","🐸","🦄","🐥","🦋","🐝","🐞","🐟","🦈",
-    // 음식·파티
-    "🍎","🍌","🍓","🍭","🍬","🍩","🍕","🍔","🍦","🎂","🎈","🎉","🎁","🎵","🎶","🎮","💩",
-    // 스포츠·탈것
-    "⚽","🏀","⚾","🥅","🏆","🥇","🏅","🟨","🟥","🚗","🚀","✈️"
+  const STAMP_GROUPS = [
+    { t: "👀 눈코입", items: ["👀","👁️","👃","👄","👅","🦷","👂",["👂","flip"]] },
+    { t: "💪 손·팔·다리·발", items: ["🖐️",["🖐️","flip"],"👍","👏","💪",["💪","flip"],"🦵",["🦵","flip"],"🦶",["🦶","flip"],"👣"] },
+    { t: "👟 신발·옷·장갑", items: ["👟",["👟","flip"],"👞",["👞","flip"],"👠",["👠","flip"],"👢","🧦","🧤","👕","👖","👗","🧥","👔","🎒"] },
+    { t: "🎩 머리 꾸미기", items: ["🎩","👑","🧢","👒","🎓","🎀","🕶️","👓","⌚"] },
+    { t: "😀 표정", items: ["😀","😂","🤣","😊","😍","🥰","😜","🤪","😎","🤩","🥳","😢","😭","😡","😱","🤗","😴","🤡","👻","💀","👽","🤖"] },
+    { t: "❤️ 하트·별", items: ["❤️","🧡","💛","💚","💙","💜","🖤","💖","💗","💘","⭐","🌟","✨","💫","🌈"] },
+    { t: "💥 만화 효과", items: ["💥","💦","💨","🔥","⚡","❄️","💤","💢","💬","💭","❗","❓"] },
+    { t: "🌸 자연", items: ["☀️","🌙","☁️","☔","⛄","🌸","🌻","🍀"] },
+    { t: "🐶 동물 친구", items: ["🐶","🐱","🐰","🐻","🐼","🐸","🦄","🐥","🦋","🐝","🐞","🐟","🦈"] },
+    { t: "🍭 음식·파티", items: ["🍎","🍌","🍓","🍭","🍬","🍩","🍕","🍔","🍦","🎂","🎈","🎉","🎁","🎵","🎶","🎮","💩"] },
+    { t: "⚽ 스포츠·탈것", items: ["⚽","🥅",["@kick"],["@kick","flip"],"🏀","⚾","🏆","🥇","🏅","🟨","🟥","🧤","🚗","🚀","✈️"] }
   ];
   let stampMode = null;
   const stampsWrap = document.getElementById("stamps");
+  const rowStampBtns = [];
   function clearStampMode(){
     stampMode = null;
     document.querySelectorAll(".stampBtn").forEach(b => b.classList.remove("selected"));
+  }
+  function stampEmojiOf(item){ return Array.isArray(item) ? item[0] : item; }
+  function stampFlipOf(item){ return Array.isArray(item) && item[1] === "flip"; }
+  function fillStampButton(btn, item){
+    const emoji = stampEmojiOf(item);
+    if (emoji.charAt(0) === "@") {
+      btn.innerHTML = SPECIAL[emoji].replace("<svg ", '<svg style="width:85%;height:85%" ');
+    } else {
+      btn.textContent = emoji;
+    }
+    if (stampFlipOf(item)) btn.style.transform = "scaleX(-1)";
+  }
+  function selectStamp(item, flatIdx){
+    clearStampMode();
+    const emoji = stampEmojiOf(item);
+    stampMode = { e: emoji, flip: stampFlipOf(item), img: emoji.charAt(0) === "@" };
+    if (rowStampBtns[flatIdx]) rowStampBtns[flatIdx].classList.add("selected");
+    setEraser(false);
+    showToast((stampMode.img ? "⚽" : emoji) + " 콕! 찍고 싶은 곳을 눌러요");
   }
   const drawModeBtn = document.createElement("button");
   drawModeBtn.className = "stampBtn";
@@ -824,33 +877,76 @@
     showToast("🖍️ 그리기!");
   });
   stampsWrap.appendChild(drawModeBtn);
-  STAMPS.forEach(item => {
-    const emoji = Array.isArray(item) ? item[0] : item;
-    const flip = Array.isArray(item);
-    const btn = document.createElement("button");
-    btn.className = "stampBtn";
-    btn.textContent = emoji;
-    if (flip) btn.style.transform = "scaleX(-1)";
-    btn.addEventListener("click", () => {
-      clearStampMode();
-      stampMode = { e: emoji, flip: flip };
-      btn.classList.add("selected");
-      setEraser(false);
-      showToast(emoji + " 콕! 찍고 싶은 곳을 눌러요");
-    });
-    stampsWrap.appendChild(btn);
+  const stampBookBtn = document.createElement("button");
+  stampBookBtn.className = "stampBtn";
+  stampBookBtn.textContent = "전체";
+  stampBookBtn.title = "스티커 전체 보기";
+  stampBookBtn.style.cssText = "width:auto;padding:0 9px;font-size:13px;font-weight:bold;background:#ffe27a;";
+  stampBookBtn.addEventListener("click", () => {
+    document.getElementById("stampBook").classList.add("open");
   });
+  stampsWrap.appendChild(stampBookBtn);
+  {
+    let flat = 0;
+    STAMP_GROUPS.forEach(g => {
+      g.items.forEach(item => {
+        const idx = flat;
+        const btn = document.createElement("button");
+        btn.className = "stampBtn";
+        fillStampButton(btn, item);
+        btn.addEventListener("click", () => selectStamp(item, idx));
+        stampsWrap.appendChild(btn);
+        rowStampBtns.push(btn);
+        flat++;
+      });
+    });
+  }
+  // 스티커 전체보기(스티커북)
+  {
+    const body = document.getElementById("stampBody");
+    let flat = 0;
+    STAMP_GROUPS.forEach(g => {
+      const title = document.createElement("div");
+      title.className = "pickGroup";
+      title.textContent = g.t;
+      body.appendChild(title);
+      const grid = document.createElement("div");
+      grid.className = "stampGrid";
+      g.items.forEach(item => {
+        const idx = flat;
+        const btn = document.createElement("button");
+        btn.className = "stampBtn stampBig";
+        fillStampButton(btn, item);
+        btn.addEventListener("click", () => {
+          document.getElementById("stampBook").classList.remove("open");
+          selectStamp(item, idx);
+        });
+        grid.appendChild(btn);
+        flat++;
+      });
+      body.appendChild(grid);
+    });
+    document.getElementById("stampClose").addEventListener("click", () => {
+      document.getElementById("stampBook").classList.remove("open");
+    });
+  }
   function placeStamp(e){
     saveUndoState();
     const p = getPos(e);
-    const size = ({ 3: 30, 8: 48, 16: 76, 28: 110 })[currentSize] || 48;
     ctx.save();
     ctx.translate(p.x, p.y);
     if (stampMode.flip) ctx.scale(-1, 1);
-    ctx.font = size + "px 'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(stampMode.e, 0, 0);
+    if (stampMode.img) {
+      const im = specialImgs[stampMode.e];
+      const w = ({ 3: 70, 8: 110, 16: 170, 28: 240 })[currentSize] || 110;
+      ctx.drawImage(im, -w / 2, -w / 2, w, w);
+    } else {
+      const size = ({ 3: 30, 8: 48, 16: 76, 28: 110 })[currentSize] || 48;
+      ctx.font = size + "px 'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(stampMode.e, 0, 0);
+    }
     ctx.restore();
   }
 
@@ -1035,11 +1131,19 @@
   }
   function setMission(idx){
     missionIndex = idx;
-    document.getElementById("missionEmoji").textContent = MISSIONS[idx][0];
+    const em = MISSIONS[idx][0];
     document.getElementById("missionName").textContent = MISSIONS[idx][1];
     const guide = document.getElementById("guide");
-    guide.textContent = MISSIONS[idx][0];
-    guide.style.fontSize = glyphCount(MISSIONS[idx][0]) > 1 ? "min(38vh, 38vw)" : "min(60vh, 60vw)";
+    if (em.charAt(0) === "@") {
+      document.getElementById("missionEmoji").textContent = "⚽";
+      guide.innerHTML = SPECIAL[em];
+      const sv = guide.querySelector("svg");
+      if (sv) sv.style.cssText = "width:min(80vh,88vw);height:min(80vh,88vw);";
+    } else {
+      document.getElementById("missionEmoji").textContent = em;
+      guide.textContent = em;
+      guide.style.fontSize = glyphCount(em) > 1 ? "min(38vh, 38vw)" : "min(60vh, 60vw)";
+    }
     setBg(sceneIndex[MISSIONS[idx][2]], false);
     resetView();
   }
@@ -1095,7 +1199,8 @@
         const cardIdx = idx;
         const card = document.createElement("div");
         card.className = "pickCard";
-        card.innerHTML = '<div class="pickEmoji">' + m[0] + '</div><div class="pickName">' + m[1] + '</div>';
+        const face = m[0].charAt(0) === "@" ? SPECIAL[m[0]].replace("<svg ", '<svg style="width:44px;height:44px" ') : m[0];
+        card.innerHTML = '<div class="pickEmoji">' + face + '</div><div class="pickName">' + m[1] + '</div>';
         card.addEventListener("click", () => {
           picker.classList.remove("open");
           clearCanvas();
