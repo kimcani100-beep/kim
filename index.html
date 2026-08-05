@@ -124,7 +124,22 @@
     padding: 5px 6px 8px;
     max-width: 100vw;
   }
-  #colors, #bgs, #stamps, #toolRow {
+  #stamps {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(2, 32px);
+    gap: 5px;
+    max-width: 100%;
+    background: #fff;
+    padding: 5px 8px;
+    border-radius: 14px;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.08);
+    align-items: center;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  #colors, #bgs, #toolRow {
     display: flex;
     flex-wrap: nowrap;
     max-width: 100%;
@@ -241,6 +256,7 @@
     .swatch { width: 34px; height: 34px; }
     .bgswatch { width: 42px; height: 36px; }
     .stampBtn { width: 40px; height: 40px; font-size: 24px; }
+    #stamps { grid-template-rows: repeat(2, 40px); }
     .sizeBtn { width: 38px; height: 38px; }
     #actions button, #zoomCtrl button { font-size: 21px; padding: 6px 12px; }
     #zoomReset { font-size: 15px; }
@@ -770,19 +786,28 @@
 
   // ---------- 스티커(도장) ----------
   const STAMPS = [
-    "👀","👁️","👃","👄","👅",
-    "👂",["👂","flip"],
-    "🖐️",["🖐️","flip"],
-    "💪",["💪","flip"],
-    "🦵",["🦵","flip"],
-    "🦶",["🦶","flip"],
-    "🎩","👑","🎀","🕶️","👓","🧢",
-    "😀","😂","🥰","😎","🤪","🥳","😭","😡",
-    "❤️","💛","💙","💚","💜","💖","💕",
-    "⭐","🌟","✨","💫","💥","💦","💨","🔥","⚡","🌈",
-    "🌸","🌻","🍀","🎈","🎉","🎁","🍭","🍦","🍎",
-    "🦋","🐝","🐞","🐣","🎵","🎶","💩",
-    "⚽","🥅","🏆","🥇","🟨","🟥","🧤"
+    // 눈코입
+    "👀","👁️","👃","👄","👅","🦷","👂",["👂","flip"],
+    // 손·팔·다리·발
+    "🖐️",["🖐️","flip"],"👍","👏","💪",["💪","flip"],"🦵",["🦵","flip"],"🦶",["🦶","flip"],"👣",
+    // 신발·옷·장갑
+    "👟",["👟","flip"],"👞",["👞","flip"],"👠",["👠","flip"],"👢","🧦","🧤","👕","👖","👗","🧥","👔","🎒",
+    // 머리 꾸미기
+    "🎩","👑","🧢","👒","🎓","🎀","🕶️","👓","⌚",
+    // 표정
+    "😀","😂","🤣","😊","😍","🥰","😜","🤪","😎","🤩","🥳","😢","😭","😡","😱","🤗","😴","🤡","👻","💀","👽","🤖",
+    // 하트·별
+    "❤️","🧡","💛","💚","💙","💜","🖤","💖","💗","💘","⭐","🌟","✨","💫","🌈",
+    // 만화 효과
+    "💥","💦","💨","🔥","⚡","❄️","💤","💢","💬","💭","❗","❓",
+    // 자연
+    "☀️","🌙","☁️","☔","⛄","🌸","🌻","🍀",
+    // 동물 친구
+    "🐶","🐱","🐰","🐻","🐼","🐸","🦄","🐥","🦋","🐝","🐞","🐟","🦈",
+    // 음식·파티
+    "🍎","🍌","🍓","🍭","🍬","🍩","🍕","🍔","🍦","🎂","🎈","🎉","🎁","🎵","🎶","🎮","💩",
+    // 스포츠·탈것
+    "⚽","🏀","⚾","🥅","🏆","🥇","🏅","🟨","🟥","🚗","🚀","✈️"
   ];
   let stampMode = null;
   const stampsWrap = document.getElementById("stamps");
