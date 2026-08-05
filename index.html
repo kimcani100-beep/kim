@@ -197,6 +197,8 @@
   }
   .sizeBtn.selected { background: #ffd166; }
   .sizeDot { border-radius: 50%; background: #333; }
+  #sizes.eraser .sizeDot { background: #2e86d1; }
+  #sizes.eraser .sizeBtn.selected { background: #cde8ff; }
   #toolDivider { width: 2px; height: 24px; background: #eee; border-radius: 2px; flex: 0 0 auto; }
   #actions button {
     flex: 0 0 auto;
@@ -716,7 +718,15 @@
   }
 
   // ---------- 그리기 ----------
-  function strokeWidth(){ return isEraser ? currentSize * 2 : currentSize; }
+  // 지우개 굵기: 같은 크기 버튼으로 조절하되 더 큼직하게
+  function strokeWidth(){
+    return isEraser ? ({ 3: 10, 8: 22, 16: 44, 28: 72 })[currentSize] || 22 : currentSize;
+  }
+  function setEraser(on){
+    isEraser = on;
+    document.getElementById("eraserBtn").classList.toggle("selected", on);
+    document.getElementById("sizes").classList.toggle("eraser", on);
+  }
 
   function startDraw(e){
     saveUndoState();
@@ -800,8 +810,7 @@
       clearStampMode();
       stampMode = { e: emoji, flip: flip };
       btn.classList.add("selected");
-      isEraser = false;
-      document.getElementById("eraserBtn").classList.remove("selected");
+      setEraser(false);
       showToast(emoji + " 콕! 찍고 싶은 곳을 눌러요");
     });
     stampsWrap.appendChild(btn);
@@ -911,9 +920,8 @@
     sw.style.background = c;
     sw.addEventListener("click", () => {
       currentColor = c;
-      isEraser = false;
+      setEraser(false);
       clearStampMode();
-      document.getElementById("eraserBtn").classList.remove("selected");
       document.querySelectorAll(".swatch").forEach(s => s.classList.remove("selected"));
       sw.classList.add("selected");
     });
@@ -933,9 +941,8 @@
   customBtn.addEventListener("click", () => colorInput.click());
   colorInput.addEventListener("input", () => {
     currentColor = colorInput.value;
-    isEraser = false;
+    setEraser(false);
     clearStampMode();
-    document.getElementById("eraserBtn").classList.remove("selected");
     document.querySelectorAll(".swatch").forEach(s => s.classList.remove("selected"));
     customBtn.classList.add("selected");
   });
@@ -963,10 +970,9 @@
   // ---------- 도구 버튼 ----------
   const eraserBtn = document.getElementById("eraserBtn");
   eraserBtn.addEventListener("click", () => {
-    isEraser = !isEraser;
+    setEraser(!isEraser);
     clearStampMode();
-    eraserBtn.classList.toggle("selected", isEraser);
-    showToast(isEraser ? "🧽 지우개! 문지르면 지워져요" : "🖍️ 다시 그리기!");
+    showToast(isEraser ? "🧽 지우개! 아래 ● 버튼으로 굵기 조절" : "🖍️ 다시 그리기!");
   });
   document.getElementById("undoBtn").addEventListener("click", undo);
   document.getElementById("clearBtn").addEventListener("click", () => {
